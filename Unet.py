@@ -1,5 +1,5 @@
-from torch.nn import ConvTranspose2d, Conv2d, MaxPool2d, Module, ModuleList, ReLU
-from torchvision.transforms import CenterCrop
+from torch.nn import ConvTranspose2d, Conv2d, MaxPool2d, Module, ModuleList, ReLU, LayerNorm
+# from torchvision.transforms import CenterCrop
 from torch.nn import functional as F
 import torch
 
@@ -66,7 +66,7 @@ class Decoder(Module):
         # grab the dimensions of the inputs, and crop the encoder
         # features to match the dimensions
         (_, _, H, W) = x.shape
-        encFeatures = CenterCrop([H, W])(encFeatures)
+        encFeatures = torchvision.transforms.CenterCrop([H, W])(encFeatures) #TODO: kills my run on mac
         # return the cropped features
         return encFeatures
 
@@ -74,7 +74,7 @@ class UNet(Module):
     def __init__(self, encChannels=(2, 4, 8, 16),
          decChannels=(16, 8, 4),
          nbClasses=2, retainDim=True,
-         outSize=(350, 350)):
+         outSize=(128, 128)):
         super().__init__()
         # initialize the encoder and decoder
         self.encoder = Encoder(encChannels)
@@ -85,6 +85,8 @@ class UNet(Module):
         self.outSize = outSize
 
     def forward(self, x):
+        # normalize the input layer
+        x = torch.nn.LayerNorm(x)
         # grab the features from the encoder
         encFeatures = self.encoder(x)
         # pass the encoder features through decoder making sure that

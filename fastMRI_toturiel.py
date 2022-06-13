@@ -7,7 +7,7 @@ import fastmri
 
 
 # file_name = 'multicoil_train/file1000167.h5'
-file_name = '/Users/amitaylev/PycharmProjects/DL_MRI/train_data/exm_file.h5'
+file_name = '/Users/amitaylev/PycharmProjects/DL_MRI/train_data/file1000592.h5'
 hf = h5py.File(file_name)
 print('Keys:', list(hf.keys()))
 print('Attrs:', dict(hf.attrs))
