@@ -6,13 +6,13 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import os
 
-NUM_EPOCHS = 50
-BATCH_SIZE = 64
+NUM_EPOCHS = 10
+BATCH_SIZE = 16
 INIT_LR = 0.0001
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 print('pytorch is using the {}'.format(DEVICE))
-train_data = loadFromDir('/home/stu1/knee_singlecoil_train',BATCH_SIZE)
-val_data = loadFromDir('/home/stu1/knee_singlecoil_val',BATCH_SIZE)
+train_data = loadFromDir('C:/Users/Nogas/Desktop/fastmri_data/train_data/',BATCH_SIZE)
+val_data = loadFromDir('C:/Users/Nogas/Desktop/fastmri_data/val_data/',BATCH_SIZE)
 
 print('Number of training batches is {}'.format(len(train_data)))
 print('Number of validation batches is {}'.format(len(val_data)))
@@ -23,7 +23,12 @@ lossFunc = MSELoss()
 opt = Adam(unet.parameters(), lr=INIT_LR)
 # calculate steps per epoch for training and test set
 trainSteps = len(train_data) // BATCH_SIZE
-valSteps = len(val_data) // BATCH_SIZE
+
+if len(val_data) < BATCH_SIZE:
+    valSteps = 1
+else:
+    valSteps = len(val_data) // BATCH_SIZE
+
 # initialize a dictionary to store training history
 H = {"train_loss": [], "val_loss": []}
 
