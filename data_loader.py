@@ -3,6 +3,7 @@ from fastmri.data import subsample
 from fastmri.data import transforms, mri_data
 
 from torch.utils.data import DataLoader
+
 # Create a mask function
 mask_func = subsample.RandomMaskFunc(
     center_fractions=[0.08, 0.04],
@@ -27,5 +28,3 @@ def loadFromDir(dir_path,BATCH_SIZE):
         challenge='singlecoil')
     train_data = DataLoader(dataset, batch_size=BATCH_SIZE,shuffle = True)
     return train_data
-
-
