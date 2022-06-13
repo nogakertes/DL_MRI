@@ -71,9 +71,9 @@ class Decoder(Module):
         return encFeatures
 
 class UNet(Module):
-    def __init__(self, encChannels=(2, 16, 32, 64),
-         decChannels=(64, 32, 16),
-         nbClasses=1, retainDim=True,
+    def __init__(self, encChannels=(2, 4, 8, 16),
+         decChannels=(16, 8, 4),
+         nbClasses=2, retainDim=True,
          outSize=(350, 350)):
         super().__init__()
         # initialize the encoder and decoder
