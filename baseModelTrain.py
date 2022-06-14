@@ -1,5 +1,5 @@
 from Unet import *
-from data_loader import loadFromDir
+from data_loader import loadFromDir, showKspaceFromTensor
 from torch.nn import MSELoss
 from torch.optim import Adam
 import torch.nn.functional as F
@@ -7,6 +7,7 @@ from tqdm import tqdm
 import os
 from matplotlib import pyplot as plt
 import numpy as np
+import fastmri
 
 
 # Define experiment variables
@@ -17,10 +18,10 @@ INIT_LR = 0.0001
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 print('pytorch is using the {}'.format(DEVICE))
 
-# train_data = loadFromDir('C:/Users/Nogas/Desktop/fastmri_data/train_data/',BATCH_SIZE, 'train')
-# val_data = loadFromDir('C:/Users/Nogas/Desktop/fastmri_data/val_data/',BATCH_SIZE, 'val')
-train_data = loadFromDir('/Users/amitaylev/PycharmProjects/DL_MRI/train_data/', BATCH_SIZE, 'train')
-val_data = loadFromDir('/Users/amitaylev/PycharmProjects/DL_MRI/val_data/', BATCH_SIZE, 'val')
+train_data = loadFromDir('C:/Users/Nogas/Desktop/fastmri_data/train_data/',BATCH_SIZE, 'train')
+val_data = loadFromDir('C:/Users/Nogas/Desktop/fastmri_data/val_data/',BATCH_SIZE, 'val')
+# train_data = loadFromDir('/Users/amitaylev/PycharmProjects/DL_MRI/train_data/', BATCH_SIZE, 'train')
+# val_data = loadFromDir('/Users/amitaylev/PycharmProjects/DL_MRI/val_data/', BATCH_SIZE, 'val')
 
 print('Number of training batches is {}'.format(len(train_data)))
 print('Number of validation batches is {}'.format(len(val_data)))
@@ -39,8 +40,6 @@ else:
 
 # initialize a dictionary to store training loss history
 H = {"train_loss": [], "val_loss": []}
-
-
 for e in tqdm(range(NUM_EPOCHS)):
     # set the model in training mode
     unet.train()
@@ -49,16 +48,23 @@ for e in tqdm(range(NUM_EPOCHS)):
     totalTestLoss = 0
     # loop over the training set
     for (i, (y, x)) in enumerate(train_data):
+        # # Plot for debug before resize
+        #fig = plt.figure()
+        #showKspaceFromTensor(x[10, :, :, :])
+        #fig = plt.figure()
+        #showKspaceFromTensor(y[10, :, :, :])
         # Resize the images to be 128x128
-        x = F.interpolate(x, size=128)
-        y = F.interpolate(y, size=128)
+        #x = F.interpolate(x, size=128)
+        #y = F.interpolate(y, size=128)
         # send the input to the device
         (x, y) = (x.to(DEVICE), y.to(DEVICE))
-        # # Plot for debug
+        # # Plot for debug after resize
         # fig = plt.figure()
-        # plt.imshow(np.log(np.abs(x[10, 0, :, :].numpy()) + 1e-9), cmap='gray')
-        # fig = plt.figure()
-        # plt.imshow(np.log(np.abs(y[10, 0, :, :].numpy()) + 1e-9), cmap='gray')
+        #plt.imshow(np.log(np.abs(x[10, 0, :, :].numpy()) + 1e-9), cmap='gray')
+        # showKspaceFromTensor(x[10, :, :, :])
+        #fig = plt.figure()
+        #showKspaceFromTensor(y[10, :, :, :])
+        #plt.imshow(np.log(np.abs(y[10, 0, :, :].numpy()) + 1e-9), cmap='gray')
         # perform a forward pass and calculate the training loss
         pred = unet(x)
         loss = lossFunc(pred, y)
@@ -75,6 +81,8 @@ for e in tqdm(range(NUM_EPOCHS)):
         unet.eval()
         # loop over the validation set
         for (x, y) in val_data:
+            #x = F.interpolate(x, size=128)
+            #y = F.interpolate(y, size=128)
             # send the input to the device
             (x, y) = (x.to(DEVICE), y.to(DEVICE))
             # make the predictions and calculate the validation loss
@@ -105,5 +113,5 @@ plt.legend(loc="lower left")
 plt.show()
 #plt.savefig(config.PLOT_PATH)
 # serialize the model to disk
-path = os.path.join('/home/stu1', "unet_tgs_salt.pth")
-torch.save(unet, path)
+# path = os.path.join('/home/stu1', "unet_tgs_salt.pth")
+# torch.save(unet, path)

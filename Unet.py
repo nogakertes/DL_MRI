@@ -1,5 +1,6 @@
 from torch.nn import ConvTranspose2d, Conv2d, MaxPool2d, Module, ModuleList, ReLU, LayerNorm
 # from torchvision.transforms import CenterCrop
+import torchvision
 from torch.nn import functional as F
 import torch
 
@@ -74,7 +75,7 @@ class UNet(Module):
     def __init__(self, encChannels=(2, 4, 8, 16),
          decChannels=(16, 8, 4),
          nbClasses=2, retainDim=True,
-         outSize=(128, 128)):
+         outSize=(320, 320)):
         super().__init__()
         # initialize the encoder and decoder
         self.encoder = Encoder(encChannels)
@@ -86,7 +87,10 @@ class UNet(Module):
 
     def forward(self, x):
         # normalize the input layer
-        x = torch.nn.LayerNorm(x)
+        _,_,w,h = x.shape
+        layer_norm = torch.nn.LayerNorm([2,w,h])
+        # x = torch.nn.LayerNorm(x)
+        x = layer_norm(x)
         # grab the features from the encoder
         encFeatures = self.encoder(x)
         # pass the encoder features through decoder making sure that
