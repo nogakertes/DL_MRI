@@ -1,5 +1,6 @@
-from Unet import *
-from data_loader import loadFromDir, showKspaceFromTensor
+# from Unet import *
+from models import *
+from data_loader import loadFromDir
 from torch.nn import MSELoss
 from torch.optim import Adam
 import torch.nn.functional as F
@@ -18,15 +19,16 @@ INIT_LR = 0.0001
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 print('pytorch is using the {}'.format(DEVICE))
 
-train_data = loadFromDir('C:/Users/Nogas/Desktop/fastmri_data/train_data/',BATCH_SIZE, 'train')
-val_data = loadFromDir('C:/Users/Nogas/Desktop/fastmri_data/val_data/',BATCH_SIZE, 'val')
-# train_data = loadFromDir('/Users/amitaylev/PycharmProjects/DL_MRI/train_data/', BATCH_SIZE, 'train')
-# val_data = loadFromDir('/Users/amitaylev/PycharmProjects/DL_MRI/val_data/', BATCH_SIZE, 'val')
+# train_data = loadFromDir('C:/Users/Nogas/Desktop/fastmri_data/train_data/',BATCH_SIZE, 'train')
+# val_data = loadFromDir('C:/Users/Nogas/Desktop/fastmri_data/val_data/',BATCH_SIZE, 'val')
+train_data = loadFromDir('/Users/amitaylev/PycharmProjects/DL_MRI/train_data/', BATCH_SIZE, 'train')
+val_data = loadFromDir('/Users/amitaylev/PycharmProjects/DL_MRI/val_data/', BATCH_SIZE, 'val')
 
 print('Number of training batches is {}'.format(len(train_data)))
 print('Number of validation batches is {}'.format(len(val_data)))
 
-unet = UNet().to(DEVICE)
+# unet = UNet().to(DEVICE)
+unet = U_Net().to(DEVICE)
 # initialize loss function and optimizer
 lossFunc = MSELoss()
 opt = Adam(unet.parameters(), lr=INIT_LR)

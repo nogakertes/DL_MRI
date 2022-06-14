@@ -25,7 +25,7 @@ def data_transform(kspace, mask, target, data_attributes, filename, slice_num):
 
     # fig = plt.figure()
     # plt.imshow(np.log(np.abs(kspace[:, :, 0].numpy()) + 1e-9), cmap='gray')     #kspace is complex so choose real or im
-    masked_kspace, _, _ = transforms.apply_mask(kspace, mask_func)
+    masked_kspace, _ = transforms.apply_mask(kspace, mask_func)
     # # Plot the masked kspace for debug
     # fig = plt.figure()
     # plt.imshow(np.log(np.abs(masked_kspace[:, :, 0].numpy()) + 1e-9), cmap='gray')
