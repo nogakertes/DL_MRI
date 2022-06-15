@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.data
 import torch
-
+import config
 
 class conv_block(nn.Module):
     """
@@ -54,7 +54,7 @@ class U_Net(nn.Module):
     def __init__(self, in_ch=2, out_ch=2):
         super(U_Net, self).__init__()
 
-        n1 = 8
+        n1 = config.INPUT_CHANNEL_SIZE
         filters = [n1, n1 * 2, n1 * 4, n1 * 8, n1 * 16]
 
         self.Maxpool1 = nn.MaxPool2d(kernel_size=2, stride=2)

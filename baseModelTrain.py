@@ -9,20 +9,25 @@ import os
 from matplotlib import pyplot as plt
 import numpy as np
 import fastmri
-
+import config
 
 # Define experiment variables
-NUM_EPOCHS = 10
-BATCH_SIZE = 16
-INIT_LR = 0.0001
+NUM_EPOCHS = config.EPHOCHS
+BATCH_SIZE = config.BATCH_SIZE
+INIT_LR = config.LR
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+print('############################################################')
+print(' ')
+print('------------------BASE MODEL TRAINING------------------------')
 print('pytorch is using the {}'.format(DEVICE))
 
-# train_data = loadFromDir('C:/Users/Nogas/Desktop/fastmri_data/train_data/',BATCH_SIZE, 'train')
-# val_data = loadFromDir('C:/Users/Nogas/Desktop/fastmri_data/val_data/',BATCH_SIZE, 'val')
-train_data = loadFromDir('/Users/amitaylev/PycharmProjects/DL_MRI/train_data/', BATCH_SIZE, 'train')
-val_data = loadFromDir('/Users/amitaylev/PycharmProjects/DL_MRI/val_data/', BATCH_SIZE, 'val')
+train_data = loadFromDir(config.TRAIN_DATA_PATH,BATCH_SIZE, 'train')
+val_data = loadFromDir(config.VAL_DATA_PATH,BATCH_SIZE, 'val')
+# train_data = loadFromDir('/Users/amitaylev/PycharmProjects/DL_MRI/train_data/', BATCH_SIZE, 'train')
+# val_data = loadFromDir('/Users/amitaylev/PycharmProjects/DL_MRI/val_data/', BATCH_SIZE, 'val')
+# train_data = loadFromDir('/home/stu1/singlecoil_train/', BATCH_SIZE, 'train')
+# val_data = loadFromDir('/home/stu1/singlecoil_val/', BATCH_SIZE, 'val')
 
 print('Number of training batches is {}'.format(len(train_data)))
 print('Number of validation batches is {}'.format(len(val_data)))
@@ -115,5 +120,6 @@ plt.legend(loc="lower left")
 plt.show()
 #plt.savefig(config.PLOT_PATH)
 # serialize the model to disk
-# path = os.path.join('/home/stu1', "unet_tgs_salt.pth")
-# torch.save(unet, path)
+if config.SAVE_NET:
+    path = os.path.join(config.PATH_TO_SAVE_NET, "baseModel.pth")
+    torch.save(unet, path)
