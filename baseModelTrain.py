@@ -1,6 +1,6 @@
 # from Unet import *
 from models import *
-from data_loader import loadFromDir
+from data_loader import loadFromDir, showKspaceFromTensor
 from torch.nn import MSELoss
 from torch.optim import Adam
 import torch.nn.functional as F
@@ -10,6 +10,8 @@ from matplotlib import pyplot as plt
 import numpy as np
 import fastmri
 import config
+from Unet import UNet
+
 
 # Define experiment variables
 NUM_EPOCHS = config.EPHOCHS
@@ -32,7 +34,7 @@ val_data = loadFromDir(config.VAL_DATA_PATH,BATCH_SIZE, 'val')
 print('Number of training batches is {}'.format(len(train_data)))
 print('Number of validation batches is {}'.format(len(val_data)))
 
-# unet = UNet().to(DEVICE)
+#unet = UNet().to(DEVICE)
 unet = U_Net().to(DEVICE)
 # initialize loss function and optimizer
 lossFunc = MSELoss()
@@ -60,18 +62,16 @@ for e in tqdm(range(NUM_EPOCHS)):
         #showKspaceFromTensor(x[10, :, :, :])
         #fig = plt.figure()
         #showKspaceFromTensor(y[10, :, :, :])
-        # Resize the images to be 128x128
-        #x = F.interpolate(x, size=128)
-        #y = F.interpolate(y, size=128)
         # send the input to the device
         (x, y) = (x.to(DEVICE), y.to(DEVICE))
-        # # Plot for debug after resize
+        # # Plot for debug
         # fig = plt.figure()
-        #plt.imshow(np.log(np.abs(x[10, 0, :, :].numpy()) + 1e-9), cmap='gray')
         # showKspaceFromTensor(x[10, :, :, :])
-        #fig = plt.figure()
-        #showKspaceFromTensor(y[10, :, :, :])
-        #plt.imshow(np.log(np.abs(y[10, 0, :, :].numpy()) + 1e-9), cmap='gray')
+        # fig = plt.figure()
+        # showKspaceFromTensor(y[10, :, :, :])
+        # plt.imshow(np.log(np.abs(x[10, 0, :, :].numpy()) + 1e-9), cmap='gray')
+        # fig = plt.figure()
+        # plt.imshow(np.log(np.abs(y[10, 0, :, :].numpy()) + 1e-9), cmap='gray')
         # perform a forward pass and calculate the training loss
         pred = unet(x)
         loss = lossFunc(pred, y)
@@ -82,14 +82,24 @@ for e in tqdm(range(NUM_EPOCHS)):
         opt.step()
         # add the loss to the total training loss so far
         totalTrainLoss += loss
+    if e == NUM_EPOCHS-1:
+        plt.figure()
+        showKspaceFromTensor(x[5, :, :, :].detach())
+        plt.suptitle('input-real value')
+        plt.figure()
+        showKspaceFromTensor(pred[5, :, :, :].detach())
+        plt.suptitle('reconstruction result-real value')
+        plt.figure()
+        showKspaceFromTensor(y[5, :, :, :].detach())
+        plt.suptitle('ground truth reconstruction-real value')
+        plt.show()
+
     # switch off autograd
     with torch.no_grad():
         # set the model in evaluation mode
         unet.eval()
         # loop over the validation set
-        for (x, y) in val_data:
-            #x = F.interpolate(x, size=128)
-            #y = F.interpolate(y, size=128)
+        for (y,x) in val_data:
             # send the input to the device
             (x, y) = (x.to(DEVICE), y.to(DEVICE))
             # make the predictions and calculate the validation loss
@@ -105,7 +115,6 @@ for e in tqdm(range(NUM_EPOCHS)):
     print("EPOCH: {}/{}".format(e + 1, NUM_EPOCHS))
     print("Train loss: {:.6f}, Validation loss: {:.4f}".format(
         avgTrainLoss, avgTestLoss))
-
 
 
 # plot the training loss
