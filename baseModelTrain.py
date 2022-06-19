@@ -92,7 +92,6 @@ for e in tqdm(range(NUM_EPOCHS)):
         plt.figure()
         showKspaceFromTensor(y[5, :, :, :].detach())
         plt.suptitle('ground truth reconstruction-real value')
-        plt.show()
 
     # switch off autograd
     with torch.no_grad():
@@ -126,9 +125,11 @@ plt.title("Training Loss on Dataset")
 plt.xlabel("Epoch #")
 plt.ylabel("Loss")
 plt.legend(loc="lower left")
-plt.show()
+
 #plt.savefig(config.PLOT_PATH)
 # serialize the model to disk
 if config.SAVE_NET:
     path = os.path.join(config.PATH_TO_SAVE_NET, "baseModel.pth")
     torch.save(unet, path)
+
+plt.show()
