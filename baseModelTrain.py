@@ -146,11 +146,11 @@ for e in tqdm(range(NUM_EPOCHS)):
     # Save the best model so far
     if avgValLoss < best_val_loss and config.SAVE_NET:
         # print(f'Best model so far is saved from epoch: {e}')
-        utils.save_model(model, path=models_path, ep=e)
+        utils.save_model(model, models_path=models_path, ep=e)
     # Decrease the lr by factor (new_lr = lr * factor) if val_loss didn't improve over #patientce epochs
     scheduler.step(avgValLoss)
     lr = optimizer.param_groups[0]['lr']
-    print(f'Defined new lr = {lr}')
+    # print(f'Defined new lr = {lr}')
 
 ''' Plots '''
 # plot the training loss
@@ -182,6 +182,6 @@ if config.SAVE_PLOTS:
     path = os.path.join(results_path, config.EXP_NAME + "learning_rate_plot")
     plt.savefig(path)
 
-# save the last model to disk
-if config.SAVE_NET:
-    utils.save_model(model, path=models_path)
+# # save the last model to disk
+# if config.SAVE_NET:
+#     utils.save_model(model, models_path=models_path)

@@ -21,7 +21,7 @@ def data_transform(kspace, mask, target, data_attributes, filename, slice_num):
     kspace = transforms.to_tensor(kspace)
     kspace = transforms.complex_center_crop(kspace, shape=(width, height))
     kspace, _, _ = transforms.normalize_instance(kspace)    # add normalization to kspace
-    masked_kspace, _ = transforms.apply_mask(kspace, mask_func)
+    masked_kspace, _, _ = transforms.apply_mask(kspace, mask_func)
     return kspace.reshape((2, width, height)), masked_kspace.reshape((2, width, height))
 
 
