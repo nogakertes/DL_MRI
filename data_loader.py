@@ -20,19 +20,12 @@ def data_transform(kspace, mask, target, data_attributes, filename, slice_num):
     width, height = 320, 320
     kspace = transforms.to_tensor(kspace)
     kspace = transforms.complex_center_crop(kspace, shape=(width, height))
-    kspace,_,_ = transforms.normalize_instance(kspace) #add normalization to kspace
-    # # Plot the cropped image for debug
-    # fig = plt.figure()
-    # plt.imshow(np.log(np.abs(kspace[:, :, 0].numpy()) + 1e-9), cmap='gray')     #kspace is complex so choose real or im
-    masked_kspace, _,_= transforms.apply_mask(kspace, mask_func)
-    # # Plot the masked kspace for debug
-    # fig = plt.figure()
-    # plt.imshow(np.log(np.abs(masked_kspace[:, :, 0].numpy()) + 1e-9), cmap='gray')
-    # plt.show()
+    kspace, _, _ = transforms.normalize_instance(kspace)    # add normalization to kspace
+    masked_kspace, _ = transforms.apply_mask(kspace, mask_func)
     return kspace.reshape((2, width, height)), masked_kspace.reshape((2, width, height))
 
 
-def loadFromDir(dir_path, batch_size, data_type,remove_Edge_slices = None):
+def loadFromDir(dir_path, batch_size, data_type, remove_Edge_slices = None):
     """
     A PyTorch Dataset that provides access to MR image slices.
     """

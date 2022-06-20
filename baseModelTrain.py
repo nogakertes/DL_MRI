@@ -1,8 +1,10 @@
 # from Unet import *
+import datetime
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from models import *
 from data_loader import loadFromDir, showKspaceFromTensor
 from torch.nn import MSELoss
-from torch.optim import Adam
+from torch.optim import Adam, SGD
 import torch.nn.functional as F
 from tqdm import tqdm
 import os
@@ -10,13 +12,21 @@ from matplotlib import pyplot as plt
 import numpy as np
 import fastmri
 import config
-from Unet import UNet
+import utils
 
 
 # Define experiment variables
-NUM_EPOCHS = config.EPHOCHS
+NUM_EPOCHS = config.EPOCHS
 BATCH_SIZE = config.BATCH_SIZE
 INIT_LR = config.LR
+LR_PATIENCE = config.LR_PATIENCE
+LR_FACTOR = config.LR_FACTOR
+
+if config.CLEARML:
+    from clearml import Task
+    task = Task.init(project_name="DeepMRI", task_name=config.EXP_NAME)
+    task.connect(config)
+    logger = task.get_logger()
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 print('############################################################')
@@ -24,21 +34,41 @@ print(' ')
 print('------------------BASE MODEL TRAINING------------------------')
 print('pytorch is using the {}'.format(DEVICE))
 
-train_data = loadFromDir(config.TRAIN_DATA_PATH,BATCH_SIZE, 'train')
-val_data = loadFromDir(config.VAL_DATA_PATH,BATCH_SIZE, 'val')
-# train_data = loadFromDir('/Users/amitaylev/PycharmProjects/DL_MRI/train_data/', BATCH_SIZE, 'train')
-# val_data = loadFromDir('/Users/amitaylev/PycharmProjects/DL_MRI/val_data/', BATCH_SIZE, 'val')
-# train_data = loadFromDir('/home/stu1/singlecoil_train/', BATCH_SIZE, 'train')
-# val_data = loadFromDir('/home/stu1/singlecoil_val/', BATCH_SIZE, 'val')
+# Define experiment path according to user and environment
+if config.user == 'noga':
+    data_base_path = config.NOGA_DATA_PATH
+    exp_path = os.path.join(config.NOGA_EXP_PATH, config.EXP_NAME)
+elif config.user == 'amitay':
+    data_base_path = config.AMITAY_DATA_PATH
+    exp_path = os.path.join(config.AMITAY_EXP_PATH, config.EXP_NAME)
+elif config.user == 'triton':
+    data_base_path = config.TRITON_DATA_PATH
+    exp_path = os.path.join(config.TRITON_EXP_PATH, config.EXP_NAME)
+
+results_path = os.path.join(exp_path, 'results')
+if not os.path.exists(results_path):
+    os.makedirs(results_path)
+
+if config.SAVE_NET:
+    models_path = os.path.join(exp_path, 'models')
+    if not os.path.exists(models_path):
+        os.makedirs(models_path)
+
+train_data = loadFromDir(data_base_path + 'train_data/', BATCH_SIZE, 'train')
+val_data = loadFromDir(data_base_path + 'val_data/', BATCH_SIZE, 'val')
 
 print('Number of training batches is {}'.format(len(train_data)))
 print('Number of validation batches is {}'.format(len(val_data)))
 
-#unet = UNet().to(DEVICE)
-unet = U_Net().to(DEVICE)
+model = U_Net().to(DEVICE)
 # initialize loss function and optimizer
 lossFunc = MSELoss()
-opt = Adam(unet.parameters(), lr=INIT_LR)
+# lossFunc = F.l1_loss()
+optimizer = Adam(model.parameters(), lr=INIT_LR)
+# optimizer = SGD(model.parameters(), lr=INIT_LR)
+lr = INIT_LR
+scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=LR_FACTOR, patience=LR_PATIENCE)
+
 # calculate steps per epoch for training and test set
 trainSteps = len(train_data) // BATCH_SIZE
 
@@ -47,41 +77,30 @@ if len(val_data) < BATCH_SIZE:
 else:
     valSteps = len(val_data) // BATCH_SIZE
 
+best_val_loss = 10000
 # initialize a dictionary to store training loss history
-H = {"train_loss": [], "val_loss": []}
+H = {"train_loss": [], "val_loss": [], "lr": []}
 for e in tqdm(range(NUM_EPOCHS)):
     # set the model in training mode
-    unet.train()
+    model.train()
     # initialize the total training and validation loss
     totalTrainLoss = 0
-    totalTestLoss = 0
-    # loop over the training set
+    totalValLoss = 0
+
+    ''' Training Loop '''
     for (i, (y, x)) in enumerate(train_data):
-        # # Plot for debug before resize
-        #fig = plt.figure()
-        #showKspaceFromTensor(x[10, :, :, :])
-        #fig = plt.figure()
-        #showKspaceFromTensor(y[10, :, :, :])
         # send the input to the device
         (x, y) = (x.to(DEVICE), y.to(DEVICE))
-        # # Plot for debug
-        # fig = plt.figure()
-        # showKspaceFromTensor(x[10, :, :, :])
-        # fig = plt.figure()
-        # showKspaceFromTensor(y[10, :, :, :])
-        # plt.imshow(np.log(np.abs(x[10, 0, :, :].numpy()) + 1e-9), cmap='gray')
-        # fig = plt.figure()
-        # plt.imshow(np.log(np.abs(y[10, 0, :, :].numpy()) + 1e-9), cmap='gray')
         # perform a forward pass and calculate the training loss
-        pred = unet(x)
+        pred = model(x)
         loss = lossFunc(pred, y)
-        # first, zero out any previously accumulated gradients, then
-        # perform backpropagation, and then update model parameters
-        opt.zero_grad()
+        # zero previously accumulated gradients, then perform backpropagation, and then update model parameters
+        optimizer.zero_grad()
         loss.backward()
-        opt.step()
+        optimizer.step()
         # add the loss to the total training loss so far
         totalTrainLoss += loss
+    # Plot the last epoch result
     if e == NUM_EPOCHS-1:
         plt.figure()
         showKspaceFromTensor(x[5, :, :, :].detach())
@@ -93,43 +112,76 @@ for e in tqdm(range(NUM_EPOCHS)):
         showKspaceFromTensor(y[5, :, :, :].detach())
         plt.suptitle('ground truth reconstruction-real value')
 
+    ''' Validation Loop '''
     # switch off autograd
     with torch.no_grad():
         # set the model in evaluation mode
-        unet.eval()
+        model.eval()
         # loop over the validation set
-        for (y,x) in val_data:
+        for (y, x) in val_data:
             # send the input to the device
             (x, y) = (x.to(DEVICE), y.to(DEVICE))
             # make the predictions and calculate the validation loss
-            pred = unet(x)
-            totalTestLoss += lossFunc(pred, y)
+            pred = model(x)
+            totalValLoss += lossFunc(pred, y)
+
+    ''' Calculations and schduler step'''
     # calculate the average training and validation loss
     avgTrainLoss = totalTrainLoss / trainSteps
-    avgTestLoss = totalTestLoss / valSteps
+    avgValLoss = totalValLoss / valSteps
     # update our training history
     H["train_loss"].append(avgTrainLoss.cpu().detach().numpy())
-    H["val_loss"].append(avgTestLoss.cpu().detach().numpy())
+    H["val_loss"].append(avgValLoss.cpu().detach().numpy())
+    H["lr"].append(lr)
+    # Save online plots per epoch on clearml - if defined
+    if config.CLEARML:
+        logger.report_scalar(title='Train and Validation Loss vs. Epochs', series='Train loss', value=avgTrainLoss, iteration=e)
+        logger.report_scalar(title='Train and Validation Loss vs. Epochs', series='Validation loss', value=avgValLoss, iteration=e)
+        logger.report_scalar(title='Learning Rate vs. Epochs', series='Learning Rate', value=lr, iteration=e)
+
     # print the model training and validation information
     print("EPOCH: {}/{}".format(e + 1, NUM_EPOCHS))
-    print("Train loss: {:.6f}, Validation loss: {:.4f}".format(
-        avgTrainLoss, avgTestLoss))
+    print("Train loss: {:.6f}, Validation loss: {:.4f}, Learning rate: {:.4f}".format(
+        avgTrainLoss, avgValLoss, lr))
+    # Save the best model so far
+    if avgValLoss < best_val_loss and config.SAVE_NET:
+        # print(f'Best model so far is saved from epoch: {e}')
+        utils.save_model(model, path=models_path, ep=e)
+    # Decrease the lr by factor (new_lr = lr * factor) if val_loss didn't improve over #patientce epochs
+    scheduler.step(avgValLoss)
+    lr = optimizer.param_groups[0]['lr']
+    print(f'Defined new lr = {lr}')
 
-
+''' Plots '''
 # plot the training loss
 plt.style.use("ggplot")
 plt.figure()
 plt.plot(H["train_loss"], label="train_loss")
 plt.plot(H["val_loss"], label="val_loss")
-plt.title("Training Loss on Dataset")
+plt.title("Train and Validation Loss vs. Epochs")
 plt.xlabel("Epoch #")
 plt.ylabel("Loss")
 plt.legend(loc="lower left")
-
-#plt.savefig(config.PLOT_PATH)
-# serialize the model to disk
-if config.SAVE_NET:
-    path = os.path.join(config.PATH_TO_SAVE_NET, "baseModel.pth")
-    torch.save(unet, path)
-
 plt.show()
+
+if config.SAVE_PLOTS:
+    path = os.path.join(results_path, config.EXP_NAME + "train_val_loss_plot")
+    plt.savefig(path)
+
+# plot the training loss
+plt.style.use("ggplot")
+plt.figure()
+plt.plot(H["lr"], label="learning_rate")
+plt.title("Learning Rate vs. Epochs")
+plt.xlabel("Epoch #")
+plt.ylabel("Learning Rate")
+plt.legend(loc="lower left")
+plt.show()
+
+if config.SAVE_PLOTS:
+    path = os.path.join(results_path, config.EXP_NAME + "learning_rate_plot")
+    plt.savefig(path)
+
+# save the last model to disk
+if config.SAVE_NET:
+    utils.save_model(model, path=models_path)

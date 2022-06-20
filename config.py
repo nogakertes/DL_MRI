@@ -1,11 +1,22 @@
 """configuration file for project"""
 
-BATCH_SIZE = 16
-EPHOCHS = 10
-LR = 0.001
+CLEARML = True
+EXP_NAME = 'Vanilla_Unet_20Jun2022'
+# user = 'amitay'
+# user = 'noga'
+user = 'triton'
+BATCH_SIZE = 32
+TEST_BATCH_SIZE = 1
+EPOCHS = 50
+LR = 1e-4
+LR_PATIENCE = 5
+LR_FACTOR = 0.9
 INPUT_CHANNEL_SIZE = 8
+SAVE_PLOTS = True
 SAVE_NET = True
-PATH_TO_SAVE_NET = 'C:/Users/Nogas/Desktop/Master/mriDL/'
-TRAIN_DATA_PATH = 'C:/Users/Nogas/Desktop/fastmri_data/train_data/'
-VAL_DATA_PATH = 'C:/Users/Nogas/Desktop/fastmri_data/val_data/'
-TEST_DATA_PATH = 'C:/Users/Nogas/Desktop/fastmri_data/val_data/'
+NOGA_DATA_PATH = 'C:/Users/Nogas/Desktop/fastmri_data/'
+NOGA_EXP_PATH = 'C:/Users/Nogas/Desktop/Master/mriDL/experiments'
+AMITAY_DATA_PATH = '/Users/amitaylev/PycharmProjects/DL_MRI/'
+AMITAY_EXP_PATH = '/Users/amitaylev/Desktop/Amitay/Msc/2nd semester/DeepMRI/Accelerated Reconstruction/python_project/experiments'
+TRITON_DATA_PATH = '/home/stu1'
+TRITON_EXP_PATH = '/home/stu1/experiments'
