@@ -151,7 +151,7 @@ for e in tqdm(range(NUM_EPOCHS)):
         utils.save_model(model, models_path=models_path, ep=e)
 
     # Decrease the lr by factor (new_lr = lr * factor) if val_loss didn't improve over #patientce epochs
-    if e % LR_PATIENCE == 0:
+    if e % LR_PATIENCE == 0 and e != 0 :
         scheduler.step(avgValLoss)
         lr = optimizer.param_groups[0]['lr']
         print(f'Defined new lr = {lr}')
