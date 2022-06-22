@@ -103,13 +103,13 @@ for e in tqdm(range(NUM_EPOCHS)):
     # Plot the last epoch result
     if e == NUM_EPOCHS-1:
         plt.figure()
-        showKspaceFromTensor(x[5, :, :, :].detach())
+        showKspaceFromTensor(x[5, :, :, :].cpu().detach())
         plt.suptitle('input-real value')
         plt.figure()
-        showKspaceFromTensor(pred[5, :, :, :].detach())
+        showKspaceFromTensor(pred[5, :, :, :].cpu().detach())
         plt.suptitle('reconstruction result-real value')
         plt.figure()
-        showKspaceFromTensor(y[5, :, :, :].detach())
+        showKspaceFromTensor(y[5, :, :, :].cpu().detach())
         plt.suptitle('ground truth reconstruction-real value')
 
     ''' Validation Loop '''
