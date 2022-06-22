@@ -57,6 +57,8 @@ class U_Net(nn.Module):
         n1 = config.INPUT_CHANNEL_SIZE
         filters = [n1, n1 * 2, n1 * 4, n1 * 8, n1 * 16]
 
+        self.Input_norm = nn.BatchNorm2d(in_ch)
+
         self.Maxpool1 = nn.MaxPool2d(kernel_size=2, stride=2)
         self.Maxpool2 = nn.MaxPool2d(kernel_size=2, stride=2)
         self.Maxpool3 = nn.MaxPool2d(kernel_size=2, stride=2)
@@ -82,10 +84,11 @@ class U_Net(nn.Module):
 
         self.Conv = nn.Conv2d(filters[0], out_ch, kernel_size=1, stride=1, padding=0)
 
-    # self.active = torch.nn.Sigmoid()
+        self.active = torch.nn.Sigmoid()
 
     def forward(self, x):
-        e1 = self.Conv1(x)
+        e1 = self.Input_norm(x)
+        e1 = self.Conv1(e1)
 
         e2 = self.Maxpool1(e1)
         e2 = self.Conv2(e2)
@@ -118,6 +121,6 @@ class U_Net(nn.Module):
 
         out = self.Conv(d2)
 
-        # d1 = self.active(out)
+        d1 = self.active(out)
 
         return out

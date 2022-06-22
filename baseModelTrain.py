@@ -1,6 +1,6 @@
 # from Unet import *
 import datetime
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch.optim.lr_scheduler import ReduceLROnPlateau, ExponentialLR
 from models import *
 from data_loader import loadFromDir, showKspaceFromTensor
 from torch.nn import MSELoss
@@ -67,7 +67,8 @@ lossFunc = MSELoss()
 optimizer = Adam(model.parameters(), lr=INIT_LR)
 # optimizer = SGD(model.parameters(), lr=INIT_LR)
 lr = INIT_LR
-scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=LR_FACTOR, patience=LR_PATIENCE)
+# scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=LR_FACTOR, patience=LR_PATIENCE)
+scheduler = ExponentialLR(optimizer, gamma=LR_FACTOR)
 
 # calculate steps per epoch for training and test set
 trainSteps = len(train_data) // BATCH_SIZE
@@ -123,7 +124,8 @@ for e in tqdm(range(NUM_EPOCHS)):
             (x, y) = (x.to(DEVICE), y.to(DEVICE))
             # make the predictions and calculate the validation loss
             pred = model(x)
-            totalValLoss += lossFunc(pred, y)
+            val_loss = lossFunc(pred, y)
+            totalValLoss += val_loss
 
     ''' Calculations and schduler step'''
     # calculate the average training and validation loss
@@ -147,10 +149,12 @@ for e in tqdm(range(NUM_EPOCHS)):
     if avgValLoss < best_val_loss and config.SAVE_NET:
         # print(f'Best model so far is saved from epoch: {e}')
         utils.save_model(model, models_path=models_path, ep=e)
+
     # Decrease the lr by factor (new_lr = lr * factor) if val_loss didn't improve over #patientce epochs
-    scheduler.step(avgValLoss)
-    lr = optimizer.param_groups[0]['lr']
-    # print(f'Defined new lr = {lr}')
+    if e % LR_PATIENCE == 0:
+        scheduler.step(avgValLoss)
+        lr = optimizer.param_groups[0]['lr']
+        print(f'Defined new lr = {lr}')
 
 ''' Plots '''
 # plot the training loss
@@ -165,7 +169,7 @@ plt.legend(loc="lower left")
 plt.show()
 
 if config.SAVE_PLOTS:
-    path = os.path.join(results_path, config.EXP_NAME + "train_val_loss_plot")
+    path = os.path.join(results_path, config.EXP_NAME + "_train_val_loss_plot")
     plt.savefig(path)
 
 # plot the training loss
@@ -179,7 +183,7 @@ plt.legend(loc="lower left")
 plt.show()
 
 if config.SAVE_PLOTS:
-    path = os.path.join(results_path, config.EXP_NAME + "learning_rate_plot")
+    path = os.path.join(results_path, config.EXP_NAME + "_learning_rate_plot")
     plt.savefig(path)
 
 # # save the last model to disk
