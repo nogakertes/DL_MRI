@@ -135,6 +135,7 @@ for e in tqdm(range(NUM_EPOCHS)):
     H["train_loss"].append(avgTrainLoss.cpu().detach().numpy())
     H["val_loss"].append(avgValLoss.cpu().detach().numpy())
     H["lr"].append(lr)
+
     # Save online plots per epoch on clearml - if defined
     if config.CLEARML:
         logger.report_scalar(title='Train and Validation Loss vs. Epochs', series='Train loss', value=avgTrainLoss, iteration=e)
@@ -154,9 +155,7 @@ for e in tqdm(range(NUM_EPOCHS)):
     if e % LR_PATIENCE == 0 and e != 0:
         scheduler.step(avgValLoss)
         lr = optimizer.param_groups[0]['lr']
-        scheduler.step()
         print(f'Defined new lr = {lr}')
-
 ''' Plots '''
 # plot the training loss
 plt.style.use("ggplot")
