@@ -1,6 +1,6 @@
 """configuration file for project"""
 
-CLEARML = False
+CLEARML = True
 EXP_NAME = 'Vanilla_Unet_22Jun2022_SIGMOID_exp_scheduler'
 # user = 'amitay'
 # user = 'noga'
