@@ -143,7 +143,7 @@ for e in tqdm(range(NUM_EPOCHS)):
 
     # print the model training and validation information
     print("EPOCH: {}/{}".format(e + 1, NUM_EPOCHS))
-    print("Train loss: {:.6f}, Validation loss: {:.4f}, Learning rate: {:.4f}".format(
+    print("Train loss: {:.6f}, Validation loss: {:.4f}, Learning rate: {:.10f}".format(
         avgTrainLoss, avgValLoss, lr))
     # Save the best model so far
     if avgValLoss < best_val_loss and config.SAVE_NET:
@@ -151,9 +151,10 @@ for e in tqdm(range(NUM_EPOCHS)):
         utils.save_model(model, models_path=models_path, ep=e)
 
     # Decrease the lr by factor (new_lr = lr * factor) if val_loss didn't improve over #patientce epochs
-    if e % LR_PATIENCE == 0 and e != 0 :
+    if e % LR_PATIENCE == 0 and e != 0:
         scheduler.step(avgValLoss)
         lr = optimizer.param_groups[0]['lr']
+        scheduler.step()
         print(f'Defined new lr = {lr}')
 
 ''' Plots '''

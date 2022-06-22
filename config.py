@@ -1,16 +1,16 @@
 """configuration file for project"""
 
-CLEARML = True
+CLEARML = False
 EXP_NAME = 'Vanilla_Unet_22Jun2022_SIGMOID_exp_scheduler'
 # user = 'amitay'
-# user = 'noga'
-user = 'triton'
-BATCH_SIZE = 32
+user = 'noga'
+# user = 'triton'
+BATCH_SIZE = 8
 TEST_BATCH_SIZE = 1
-EPOCHS = 50
+EPOCHS = 15
 LR = 1e-4
-LR_PATIENCE = 5
-LR_FACTOR = 0.1
+LR_PATIENCE = 3
+LR_FACTOR = 0.9
 INPUT_CHANNEL_SIZE = 8
 SAVE_PLOTS = True
 SAVE_NET = True
