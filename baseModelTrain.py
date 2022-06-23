@@ -92,14 +92,15 @@ for e in tqdm(range(NUM_EPOCHS)):
 
     ''' Training Loop '''
     for (i, (y, x)) in enumerate(train_data):
+        # perform a forward pass and calculate the training loss
+        x = x.unsqueeze(1)
+        y = y.unsqueeze(1)
         # send the input to the device
         (x, y) = (x.to(DEVICE), y.to(DEVICE))
         # # Normalize x and y
         # x = (x-x.min())/(x.max()-x.min())
         # y = (y-y.min())/(y.max()-y.min())
-        # perform a forward pass and calculate the training loss
-        x = x.unsqueeze(1)
-        y = y.unsqueeze(1)
+
         pred = model(x)
         loss = lossFunc(pred, y)
         # zero previously accumulated gradients, then perform backpropagation, and then update model parameters
