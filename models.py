@@ -51,13 +51,14 @@ class U_Net(nn.Module):
     Paper : https://arxiv.org/abs/1505.04597
     """
 
-    def __init__(self, in_ch=2, out_ch=2):
+    def __init__(self, in_ch=1, out_ch=1):
         super(U_Net, self).__init__()
 
         n1 = config.INPUT_CHANNEL_SIZE
         filters = [n1, n1 * 2, n1 * 4, n1 * 8, n1 * 16]
 
-        self.Input_norm = nn.BatchNorm2d(in_ch)
+        # self.Input_norm = nn.BatchNorm2d(in_ch)
+        self.Input_norm = nn.LayerNorm(normalized_shape=(320, 320))
 
         self.Maxpool1 = nn.MaxPool2d(kernel_size=2, stride=2)
         self.Maxpool2 = nn.MaxPool2d(kernel_size=2, stride=2)
@@ -84,7 +85,7 @@ class U_Net(nn.Module):
 
         self.Conv = nn.Conv2d(filters[0], out_ch, kernel_size=1, stride=1, padding=0)
 
-        self.active = torch.nn.Sigmoid()
+        # self.active = torch.nn.Sigmoid()
 
     def forward(self, x):
         e1 = self.Input_norm(x)
@@ -121,6 +122,6 @@ class U_Net(nn.Module):
 
         out = self.Conv(d2)
 
-        d1 = self.active(out)
+        # d1 = self.active(out)
 
         return out

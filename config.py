@@ -1,17 +1,19 @@
 """configuration file for project"""
 
-CLEARML = False
-EXP_NAME = 'Vanilla_Unet_22Jun2022_SIGMOID_exp_scheduler'
+EXP_NAME = 'Vanilla_Unet_23Jun2022_1_input_ch'
+# CLEARML = False
 # user = 'amitay'
-user = 'noga'
-# user = 'triton'
-BATCH_SIZE = 8
+# user = 'noga'
+user = 'triton'
+CLEARML = True
+
+BATCH_SIZE = 32
 TEST_BATCH_SIZE = 1
-EPOCHS = 15
+EPOCHS = 50
 LR = 1e-4
-LR_PATIENCE = 3
+LR_PATIENCE = 10
 LR_FACTOR = 0.9
-INPUT_CHANNEL_SIZE = 8
+INPUT_CHANNEL_SIZE = 16
 SAVE_PLOTS = True
 SAVE_NET = True
 NOGA_DATA_PATH = 'C:/Users/Nogas/Desktop/fastmri_data/'

@@ -4,7 +4,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau, ExponentialLR
 from models import *
 from data_loader import loadFromDir, showKspaceFromTensor
 from torch.nn import MSELoss
-from torch.optim import Adam, SGD
+from torch.optim import Adam, SGD, RMSprop
 import torch.nn.functional as F
 from tqdm import tqdm
 import os
@@ -28,7 +28,8 @@ if config.CLEARML:
     task.connect(config)
     logger = task.get_logger()
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+DEVICE = "cuda:2" if torch.cuda.is_available() else "cpu"
+
 print('############################################################')
 print(' ')
 print('------------------BASE MODEL TRAINING------------------------')
@@ -66,6 +67,7 @@ lossFunc = MSELoss()
 # lossFunc = F.l1_loss()
 optimizer = Adam(model.parameters(), lr=INIT_LR)
 # optimizer = SGD(model.parameters(), lr=INIT_LR)
+# optimizer = RMSprop(model.parameters(), lr=INIT_LR)
 lr = INIT_LR
 # scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=LR_FACTOR, patience=LR_PATIENCE)
 scheduler = ExponentialLR(optimizer, gamma=LR_FACTOR)
@@ -92,7 +94,12 @@ for e in tqdm(range(NUM_EPOCHS)):
     for (i, (y, x)) in enumerate(train_data):
         # send the input to the device
         (x, y) = (x.to(DEVICE), y.to(DEVICE))
+        # # Normalize x and y
+        # x = (x-x.min())/(x.max()-x.min())
+        # y = (y-y.min())/(y.max()-y.min())
         # perform a forward pass and calculate the training loss
+        x = x.unsqueeze(1)
+        y = y.unsqueeze(1)
         pred = model(x)
         loss = lossFunc(pred, y)
         # zero previously accumulated gradients, then perform backpropagation, and then update model parameters
@@ -107,11 +114,17 @@ for e in tqdm(range(NUM_EPOCHS)):
         showKspaceFromTensor(x[5, :, :, :].cpu().detach())
         plt.suptitle('input-real value')
         plt.figure()
+        path = os.path.join(results_path, config.EXP_NAME + "_input_real_value")
+        plt.savefig(path)
         showKspaceFromTensor(pred[5, :, :, :].cpu().detach())
         plt.suptitle('reconstruction result-real value')
+        path = os.path.join(results_path, config.EXP_NAME + "_reconstruction result-real value")
+        plt.savefig(path)
         plt.figure()
         showKspaceFromTensor(y[5, :, :, :].cpu().detach())
         plt.suptitle('ground truth reconstruction-real value')
+        path = os.path.join(results_path, config.EXP_NAME + "_ground truth reconstruction-real value")
+        plt.savefig(path)
 
     ''' Validation Loop '''
     # switch off autograd
@@ -153,9 +166,13 @@ for e in tqdm(range(NUM_EPOCHS)):
 
     # Decrease the lr by factor (new_lr = lr * factor) if val_loss didn't improve over #patientce epochs
     if e % LR_PATIENCE == 0 and e != 0:
-        scheduler.step(avgValLoss)
-        lr = optimizer.param_groups[0]['lr']
+        scheduler.step()
+        lr = scheduler.get_last_lr()[0]
+        # lr = optimizer.param_groups[0]['lr']
         print(f'Defined new lr = {lr}')
+        if lr < 1e-7:
+            print(f'lr is {lr} and is smaller than 1e-7. Stopping the train!')
+
 ''' Plots '''
 # plot the training loss
 plt.style.use("ggplot")
