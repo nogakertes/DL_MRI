@@ -51,7 +51,7 @@ class U_Net(nn.Module):
     Paper : https://arxiv.org/abs/1505.04597
     """
 
-    def __init__(self, in_ch=1, out_ch=1):
+    def __init__(self, in_ch=2, out_ch=2):
         super(U_Net, self).__init__()
 
         n1 = config.INPUT_CHANNEL_SIZE
@@ -88,6 +88,7 @@ class U_Net(nn.Module):
         # self.active = torch.nn.Sigmoid()
 
     def forward(self, x):
+        # e1 = self.Input_norm(x.unsqueeze(1))
         e1 = self.Input_norm(x)
         e1 = self.Conv1(e1)
 

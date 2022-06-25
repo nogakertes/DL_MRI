@@ -69,8 +69,8 @@ optimizer = Adam(model.parameters(), lr=INIT_LR)
 # optimizer = SGD(model.parameters(), lr=INIT_LR)
 # optimizer = RMSprop(model.parameters(), lr=INIT_LR)
 lr = INIT_LR
-# scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=LR_FACTOR, patience=LR_PATIENCE)
-scheduler = ExponentialLR(optimizer, gamma=LR_FACTOR)
+scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=LR_FACTOR, patience=LR_PATIENCE)
+# scheduler = ExponentialLR(optimizer, gamma=LR_FACTOR)
 
 # calculate steps per epoch for training and test set
 trainSteps = len(train_data) // BATCH_SIZE
@@ -92,9 +92,9 @@ for e in tqdm(range(NUM_EPOCHS)):
 
     ''' Training Loop '''
     for (i, (y, x)) in enumerate(train_data):
-        # perform a forward pass and calculate the training loss
-        x = x.unsqueeze(1)
-        y = y.unsqueeze(1)
+        # # perform a forward pass and calculate the training loss
+        # x = x.unsqueeze(1)
+        # y = y.unsqueeze(1)
         # send the input to the device
         (x, y) = (x.to(DEVICE), y.to(DEVICE))
         # # Normalize x and y
@@ -102,6 +102,7 @@ for e in tqdm(range(NUM_EPOCHS)):
         # y = (y-y.min())/(y.max()-y.min())
 
         pred = model(x)
+        # loss = lossFunc(pred, y.unsqueeze(1))     # for 1 input ch
         loss = lossFunc(pred, y)
         # zero previously accumulated gradients, then perform backpropagation, and then update model parameters
         optimizer.zero_grad()
@@ -138,6 +139,7 @@ for e in tqdm(range(NUM_EPOCHS)):
             (x, y) = (x.to(DEVICE), y.to(DEVICE))
             # make the predictions and calculate the validation loss
             pred = model(x)
+            # val_loss = lossFunc(pred, y.unsqueeze(1))       # for 1 input ch
             val_loss = lossFunc(pred, y)
             totalValLoss += val_loss
 
@@ -165,14 +167,17 @@ for e in tqdm(range(NUM_EPOCHS)):
         # print(f'Best model so far is saved from epoch: {e}')
         utils.save_model(model, models_path=models_path, ep=e)
 
-    # Decrease the lr by factor (new_lr = lr * factor) if val_loss didn't improve over #patientce epochs
+    # Decrease the lr by factor (new_lr = lr * factor) every #patientce epochs
     if e % LR_PATIENCE == 0 and e != 0:
         scheduler.step()
         lr = scheduler.get_last_lr()[0]
-        # lr = optimizer.param_groups[0]['lr']
         print(f'Defined new lr = {lr}')
-        if lr < 1e-7:
-            print(f'lr is {lr} and is smaller than 1e-7. Stopping the train!')
+    # Decrease the lr by factor (new_lr = lr * factor) if val_loss didn't improve over #patientce epochs
+    # scheduler.step(avgValLoss)
+    # lr = scheduler.get_last_lr()[0]
+    # print(f'Defined new lr = {lr}')
+    if lr < 1e-7:
+        print(f'lr is {lr} and is smaller than 1e-7. Stopping the train!')
 
 ''' Plots '''
 # plot the training loss

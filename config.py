@@ -1,6 +1,6 @@
 """configuration file for project"""
 
-EXP_NAME = 'Vanilla_Unet_23Jun2022_1_input_ch'
+EXP_NAME = 'Vanilla_Unet_23Jun2022_reduce_on_plat'
 # CLEARML = False
 # user = 'amitay'
 # user = 'noga'
@@ -11,7 +11,7 @@ BATCH_SIZE = 32
 TEST_BATCH_SIZE = 1
 EPOCHS = 50
 LR = 1e-4
-LR_PATIENCE = 10
+LR_PATIENCE = 3
 LR_FACTOR = 0.9
 INPUT_CHANNEL_SIZE = 8
 SAVE_PLOTS = True
