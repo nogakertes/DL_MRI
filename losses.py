@@ -35,8 +35,8 @@ def create_window(window_size, channel=1):
 
     return window
 
-def ssim(img1, img2, val_range, window_size=11):
-    L = val_range  # L is the dynamic range of the pixel values (255 for 8-bit grayscale images),
+def ssim(img1, img2, window_size=11):
+    #L = val_range  # L is the dynamic range of the pixel values (255 for 8-bit grayscale images),
     b,c,h,w = img1.shape
     pad = window_size // 2
     window = create_window(window_size=11,channel=c)
@@ -65,10 +65,10 @@ def ssim(img1, img2, val_range, window_size=11):
 
     return ssim_score.mean()
 
-class SSIMLoss(nn.Module):
-    """
-    SSIM loss module.
-    """
-
+def add_ssim_reg(loss,pred,y):
+    """add ssim regularization to loss"""
+    ssim_lambda = 0.001
+    reg_loss = loss + (1-ssim(pred,y)) * ssim_lambda
+    return reg_loss
 
 

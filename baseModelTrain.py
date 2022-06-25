@@ -13,6 +13,7 @@ import numpy as np
 import fastmri
 import config
 import utils
+from losses import add_ssim_reg
 
 
 # Define experiment variables
@@ -104,6 +105,7 @@ for e in tqdm(range(NUM_EPOCHS)):
         pred = model(x)
         # loss = lossFunc(pred, y.unsqueeze(1))     # for 1 input ch
         loss = lossFunc(pred, y)
+        loss = add_ssim_reg(loss,pred,y)
         # zero previously accumulated gradients, then perform backpropagation, and then update model parameters
         optimizer.zero_grad()
         loss.backward()
