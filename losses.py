@@ -65,10 +65,42 @@ def ssim(img1, img2, window_size=11):
 
     return ssim_score.mean()
 
-def add_ssim_reg(loss,pred,y):
-    """add ssim regularization to loss"""
-    ssim_lambda = 0.001
-    reg_loss = loss + (1-ssim(pred,y)) * ssim_lambda
-    return reg_loss
+
+class SSIMLoss(nn.Module):
+    """
+    SSIM loss module.
+    """
+
+    def __init__(self, win_size: int = 7, k1: float = 0.01, k2: float = 0.03):
+        """
+        Args:
+            win_size: Window size for SSIM calculation.
+            k1: k1 parameter for SSIM calculation.
+            k2: k2 parameter for SSIM calculation.
+        """
+        super().__init__()
+        self.win_size = win_size
+        self.k1, self.k2 = k1, k2
+        self.register_buffer("w", torch.ones(1, 1, win_size, win_size) / win_size ** 2)
+        NP = win_size ** 2
+        self.cov_norm = NP / (NP - 1)
+
+    def forward(
+        self,
+        X: torch.Tensor,
+        Y: torch.Tensor,
+        reduced: bool = True,
+    ):
+        S = ssim(X,Y)
+        if reduced:
+            return 1 - S.mean()
+        else:
+            return 1 - S
+
+# def add_ssim_reg(loss,pred,y,DEVICE):
+#     """add ssim regularization to loss"""
+#     ssim_lambda = 0.001
+#     reg_loss = loss + (1-ssim(pred,y).to(DEVICE)) * ssim_lambda
+#     return reg_loss
 
 
