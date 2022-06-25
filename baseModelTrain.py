@@ -75,12 +75,8 @@ scheduler = ExponentialLR(optimizer, gamma=LR_FACTOR)
 reg_loss = SSIMLoss()
 reg_factor = 0.01
 # calculate steps per epoch for training and test set
-trainSteps = len(train_data) // BATCH_SIZE
-
-if len(val_data) < BATCH_SIZE:
-    valSteps = 1
-else:
-    valSteps = len(val_data) // BATCH_SIZE
+trainSteps = len(train_data)
+valSteps = len(val_data)
 
 best_val_loss = 10000
 # initialize a dictionary to store training loss history
@@ -105,7 +101,7 @@ for e in tqdm(range(NUM_EPOCHS)):
 
         pred = model(x)
         # loss = lossFunc(pred, y.unsqueeze(1))     # for 1 input ch
-        loss = lossFunc(pred, y)+reg_factor*reg_loss(pred,y,x.max(),DEVICE)
+        loss = lossFunc(pred, y)
         # zero previously accumulated gradients, then perform backpropagation, and then update model parameters
         optimizer.zero_grad()
         loss.backward()
@@ -116,18 +112,18 @@ for e in tqdm(range(NUM_EPOCHS)):
     if e == NUM_EPOCHS-1:
         plt.figure()
         showKspaceFromTensor(x[5, :, :, :].cpu().detach())
-        plt.suptitle('input-real value')
+        plt.suptitle('input')
         plt.figure()
-        path = os.path.join(results_path, config.EXP_NAME + "_input_real_value")
+        path = os.path.join(results_path, config.EXP_NAME + "_input")
         plt.savefig(path)
         showKspaceFromTensor(pred[5, :, :, :].cpu().detach())
-        plt.suptitle('reconstruction result-real value')
-        path = os.path.join(results_path, config.EXP_NAME + "_reconstruction result-real value")
+        plt.suptitle('reconstruction result')
+        path = os.path.join(results_path, config.EXP_NAME + "_reconstruction result")
         plt.savefig(path)
         plt.figure()
         showKspaceFromTensor(y[5, :, :, :].cpu().detach())
-        plt.suptitle('ground truth reconstruction-real value')
-        path = os.path.join(results_path, config.EXP_NAME + "_ground truth reconstruction-real value")
+        plt.suptitle('ground truth reconstruction')
+        path = os.path.join(results_path, config.EXP_NAME + "_ground truth reconstruction")
         plt.savefig(path)
 
     ''' Validation Loop '''
@@ -142,7 +138,7 @@ for e in tqdm(range(NUM_EPOCHS)):
             # make the predictions and calculate the validation loss
             pred = model(x)
             # val_loss = lossFunc(pred, y.unsqueeze(1))       # for 1 input ch
-            val_loss = lossFunc(pred, y)+reg_factor*reg_loss(pred,y,x.max(),DEVICE)
+            val_loss = lossFunc(pred, y)
             totalValLoss += val_loss
 
     ''' Calculations and schduler step'''
