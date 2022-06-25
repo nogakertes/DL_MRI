@@ -31,12 +31,12 @@ def data_transform(kspace, mask, target, data_attributes, filename, slice_num):
         masked_kspace, _ = transforms.apply_mask(kspace, mask_func)
 
     # # normalize input
-    # masked_kspace, mean, std = transforms.normalize_instance(masked_kspace, eps=1e-11)
-    # masked_kspace = masked_kspace.clamp(-6, 6)
-    #
+    masked_kspace, mean, std = transforms.normalize_instance(masked_kspace, eps=1e-11)
+   # masked_kspace = masked_kspace.clamp(-6, 6)
+
     # # process kspace image
-    # kspace = transforms.normalize(kspace, mean, std, eps=1e-11)
-    # kspace = kspace.clamp(-6, 6)
+    kspace = transforms.normalize(kspace, mean, std, eps=1e-11)
+ #   kspace = kspace.clamp(-6, 6)
 
     return kspace.reshape((2, width, height)), masked_kspace.reshape((2, width, height))
 
