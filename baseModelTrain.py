@@ -105,7 +105,7 @@ for e in tqdm(range(NUM_EPOCHS)):
 
         pred = model(x)
         # loss = lossFunc(pred, y.unsqueeze(1))     # for 1 input ch
-        loss = lossFunc(pred, y)+reg_factor*reg_loss(pred,y,x.max())
+        loss = lossFunc(pred, y)+reg_factor*reg_loss(pred,y,x.max(),DEVICE)
         # zero previously accumulated gradients, then perform backpropagation, and then update model parameters
         optimizer.zero_grad()
         loss.backward()
@@ -142,7 +142,7 @@ for e in tqdm(range(NUM_EPOCHS)):
             # make the predictions and calculate the validation loss
             pred = model(x)
             # val_loss = lossFunc(pred, y.unsqueeze(1))       # for 1 input ch
-            val_loss = lossFunc(pred, y)+reg_factor*reg_loss(pred,y,x.max())
+            val_loss = lossFunc(pred, y)+reg_factor*reg_loss(pred,y,x.max(),DEVICE)
             totalValLoss += val_loss
 
     ''' Calculations and schduler step'''

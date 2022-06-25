@@ -130,10 +130,11 @@ class SSIMLoss(nn.Module):
         X: torch.Tensor,
         Y: torch.Tensor,
         data_range: torch.Tensor,
+        DEVICE: str,
         reduced: bool = True,
     ):
         assert isinstance(self.w, torch.Tensor)
-
+        self.w = self.w.to(DEVICE)
         C1 = (self.k1 * data_range) ** 2
         C2 = (self.k2 * data_range) ** 2
         ux = F.conv2d(X, self.w)  # typing: ignore
