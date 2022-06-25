@@ -33,7 +33,7 @@ DEVICE = "cuda:2" if torch.cuda.is_available() else "cpu"
 print('############################################################')
 print(' ')
 print('------------------BASE MODEL TRAINING------------------------')
-print('pytorch is using the {}'.format(DEVICE))
+print('pytorch is using {}'.format(DEVICE))
 
 # Define experiment path according to user and environment
 if config.user == 'noga':
@@ -71,17 +71,14 @@ optimizer_im = Adam(model_im.parameters(), lr=INIT_LR)
 # optimizer = SGD(model.parameters(), lr=INIT_LR)
 # optimizer = RMSprop(model.parameters(), lr=INIT_LR)
 lr = INIT_LR
-scheduler_re = ReduceLROnPlateau(optimizer_re, mode='min', factor=LR_FACTOR, patience=LR_PATIENCE)
-scheduler_im = ReduceLROnPlateau(optimizer_im, mode='min', factor=LR_FACTOR, patience=LR_PATIENCE)
-# scheduler = ExponentialLR(optimizer, gamma=LR_FACTOR)
+# scheduler_re = ReduceLROnPlateau(optimizer_re, mode='min', factor=LR_FACTOR, patience=LR_PATIENCE)
+# scheduler_im = ReduceLROnPlateau(optimizer_im, mode='min', factor=LR_FACTOR, patience=LR_PATIENCE)
+scheduler_re = ExponentialLR(optimizer_re, gamma=LR_FACTOR)
+scheduler_im = ExponentialLR(optimizer_im, gamma=LR_FACTOR)
 
 # calculate steps per epoch for training and test set
-trainSteps = len(train_data) // BATCH_SIZE
-
-if len(val_data) < BATCH_SIZE:
-    valSteps = 1
-else:
-    valSteps = len(val_data) // BATCH_SIZE
+trainSteps = len(train_data)
+valSteps = len(val_data)
 
 for i_model in range(2):
     if i_model == 0:
@@ -109,7 +106,12 @@ for i_model in range(2):
     # initialize a dictionary to store training loss history
     H = {"train_loss": [], "val_loss": [], "lr": []}
 
-    print(f'Started training {curr_model}')
+    print('############################################################')
+    print(' ')
+    print(f'----------Started training {curr_model}----------')
+    print(' ')
+    print('############################################################')
+
     # Train the models sequentially
     for e in tqdm(range(NUM_EPOCHS)):
         # set the model in training mode
@@ -120,6 +122,7 @@ for i_model in range(2):
 
         ''' Training Loop '''
         for (i, (y, x)) in enumerate(train_data):
+            # print(f'Training batch #{i}/{len(train_data)}')
             # send the input to the device
             (x, y) = (x.to(DEVICE), y.to(DEVICE))
             x = x[:, i_model, :, :]
@@ -135,15 +138,16 @@ for i_model in range(2):
             optimizer.step()
             # add the loss to the total training loss so far
             totalTrainLoss += loss
+        print(f'Finished ep: {e} training with training loss: {totalTrainLoss}')
 
-        print(f'Finished ep training with training loss: {totalTrainLoss}')
         ''' Validation Loop '''
         # switch off autograd
         with torch.no_grad():
             # set the model in evaluation mode
             model.eval()
             # loop over the validation set
-            for (y, x) in val_data:
+            for (i, (y, x)) in enumerate(val_data):
+                # print(f'Validation batch #{i}/{len(val_data)}')
                 # send the input to the device
                 (x, y) = (x.to(DEVICE), y.to(DEVICE))
                 x = x[:, i_model, :, :]
@@ -152,15 +156,19 @@ for i_model in range(2):
                 pred = model(x)
                 val_loss = lossFunc(pred, y.unsqueeze(1))       # for 1 input ch
                 totalValLoss += val_loss
-            print(f'Finished ep validation with validation loss: {totalValLoss}')
-        ''' Calculations and schduler step'''
+            print(f'Finished ep: {e} validation with validation loss: {totalValLoss}')
+
+        ''' Calculations and scheduler step'''
         # calculate the average training and validation loss
         avgTrainLoss = totalTrainLoss / trainSteps
         avgValLoss = totalValLoss / valSteps
         # update our training history
-        H["train_loss"].append(avgTrainLoss.cpu().detach().numpy())
-        H["val_loss"].append(avgValLoss.cpu().detach().numpy())
+        H["train_loss"].append(avgTrainLoss)
+        print(f'train_loss {avgTrainLoss}')
+        H["val_loss"].append(avgValLoss)
+        print(f'val_loss {avgValLoss}')
         H["lr"].append(lr)
+        print(f'lr {lr}')
 
         # Save online plots per epoch on clearml - if defined
         if config.CLEARML:
@@ -169,12 +177,11 @@ for i_model in range(2):
             logger.report_scalar(title=curr_model+' Learning Rate vs. Epochs', series='Learning Rate', value=lr, iteration=e)
 
         # print the model training and validation information
-        print(curr_model + " EPOCH: {}/{}".format(e + 1, NUM_EPOCHS))
-        print(curr_model + " Train loss: {:.5f}, Validation loss: {:.5f}, Learning rate: {:.5f}".format(avgTrainLoss, avgValLoss, lr))
+        print(curr_model + " EPOCH: {}/{}".format(e+1, NUM_EPOCHS))
+        print(curr_model + " Train loss: {:.4f}, Validation loss: {:.4f}, Learning rate: {:.4f}".format(avgTrainLoss, avgValLoss, lr))
         # Save the best model so far
         if avgValLoss < best_val_loss and config.SAVE_NET:
             best_val_loss = avgValLoss
-            # print(f'Best model so far is saved from epoch: {e}')
             utils.save_model(model, models_path=models_path, ep=e)
 
         # Decrease the lr by factor (new_lr = lr * factor) every #patientce epochs
@@ -199,8 +206,7 @@ for i_model in range(2):
     plt.xlabel("Epoch #")
     plt.ylabel("Loss")
     plt.legend(loc="lower left")
-    plt.show()
-
+    # plt.show()
     if config.SAVE_PLOTS:
         path = os.path.join(results_path, config.EXP_NAME + "_train_val_loss_plot")
         plt.savefig(path)
@@ -213,14 +219,13 @@ for i_model in range(2):
     plt.xlabel("Epoch #")
     plt.ylabel("Learning Rate")
     plt.legend(loc="lower left")
-    plt.show()
-
+    # plt.show()
     if config.SAVE_PLOTS:
         path = os.path.join(results_path, config.EXP_NAME + "_learning_rate_plot")
         plt.savefig(path)
 
-    print(f'Finished training {curr_model}')
-
-    # # save the last model to disk
-    # if config.SAVE_NET:
-    #     utils.save_model(model, models_path=models_path)
+    print('############################################################')
+    print(' ')
+    print(f'---------Finished training {curr_model}---------')
+    print(' ')
+    print('############################################################')

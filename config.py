@@ -1,17 +1,17 @@
 """configuration file for project"""
 
-EXP_NAME = 'baseline_2_vanilla_Unets_25Jun2022'
-CLEARML = False
-user = 'amitay'
+EXP_NAME = 'baseline_2_vanilla_Unets_25Jun2022_MSE'
+# CLEARML = False
+# user = 'amitay'
+# BATCH_SIZE = 8
 # user = 'noga'
-# user = 'triton'
-# CLEARML = True
-
+user = 'triton'
+CLEARML = True
 BATCH_SIZE = 32
 TEST_BATCH_SIZE = 1
 EPOCHS = 50
 LR = 1e-4
-LR_PATIENCE = 3
+LR_PATIENCE = 5
 LR_FACTOR = 0.9
 INPUT_CHANNEL_SIZE = 8
 SAVE_PLOTS = True
