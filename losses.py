@@ -65,6 +65,46 @@ def ssim(img1, img2, DEVICE, window_size=11):
 
     return ssim_score.mean()
 
+#
+# class SSIMLoss(nn.Module):
+#     """
+#     SSIM loss module.
+#     """
+#
+#     def __init__(self, win_size: int = 7, k1: float = 0.01, k2: float = 0.03):
+#         """
+#         Args:
+#             win_size: Window size for SSIM calculation.
+#             k1: k1 parameter for SSIM calculation.
+#             k2: k2 parameter for SSIM calculation.
+#         """
+#         super().__init__()
+#         self.win_size = win_size
+#         self.k1, self.k2 = k1, k2
+#         self.register_buffer("w", torch.ones(1, 1, win_size, win_size) / win_size ** 2)
+#         NP = win_size ** 2
+#         self.cov_norm = NP / (NP - 1)
+#
+#     def forward(
+#         self,
+#         X: torch.Tensor,
+#         Y: torch.Tensor,
+#         DEVICE : str,
+#         reduced: bool = True,
+#     ):
+#         S = ssim(X,Y,DEVICE)
+#         if reduced:
+#             return 1 - S.mean()
+#         else:
+#             return 1 - S
+
+# def add_ssim_reg(loss,pred,y,DEVICE):
+#     """add ssim regularization to loss"""
+#     ssim_lambda = 0.001
+#     reg_loss = loss + (1-ssim(pred,y).to(DEVICE)) * ssim_lambda
+#     return reg_loss
+
+
 
 class SSIMLoss(nn.Module):
     """
@@ -81,7 +121,7 @@ class SSIMLoss(nn.Module):
         super().__init__()
         self.win_size = win_size
         self.k1, self.k2 = k1, k2
-        self.register_buffer("w", torch.ones(1, 1, win_size, win_size) / win_size ** 2)
+        self.register_buffer("w", torch.ones(1, 2, win_size, win_size) / win_size ** 2)
         NP = win_size ** 2
         self.cov_norm = NP / (NP - 1)
 
@@ -89,19 +129,31 @@ class SSIMLoss(nn.Module):
         self,
         X: torch.Tensor,
         Y: torch.Tensor,
-        DEVICE : str,
+        data_range: torch.Tensor,
         reduced: bool = True,
     ):
-        S = ssim(X,Y,DEVICE)
+        assert isinstance(self.w, torch.Tensor)
+
+        C1 = (self.k1 * data_range) ** 2
+        C2 = (self.k2 * data_range) ** 2
+        ux = F.conv2d(X, self.w)  # typing: ignore
+        uy = F.conv2d(Y, self.w)  #
+        uxx = F.conv2d(X * X, self.w)
+        uyy = F.conv2d(Y * Y, self.w)
+        uxy = F.conv2d(X * Y, self.w)
+        vx = self.cov_norm * (uxx - ux * ux)
+        vy = self.cov_norm * (uyy - uy * uy)
+        vxy = self.cov_norm * (uxy - ux * uy)
+        A1, A2, B1, B2 = (
+            2 * ux * uy + C1,
+            2 * vxy + C2,
+            ux ** 2 + uy ** 2 + C1,
+            vx + vy + C2,
+        )
+        D = B1 * B2
+        S = (A1 * A2) / D
+
         if reduced:
             return 1 - S.mean()
         else:
             return 1 - S
-
-# def add_ssim_reg(loss,pred,y,DEVICE):
-#     """add ssim regularization to loss"""
-#     ssim_lambda = 0.001
-#     reg_loss = loss + (1-ssim(pred,y).to(DEVICE)) * ssim_lambda
-#     return reg_loss
-
-
