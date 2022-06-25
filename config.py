@@ -1,11 +1,11 @@
 """configuration file for project"""
 
-EXP_NAME = 'Vanilla_Unet_23Jun2022_reduce_on_plat'
-# CLEARML = False
-# user = 'amitay'
+EXP_NAME = 'baseline_2_vanilla_Unets_25Jun2022'
+CLEARML = False
+user = 'amitay'
 # user = 'noga'
-user = 'triton'
-CLEARML = True
+# user = 'triton'
+# CLEARML = True
 
 BATCH_SIZE = 32
 TEST_BATCH_SIZE = 1

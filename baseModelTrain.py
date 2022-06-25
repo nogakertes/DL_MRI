@@ -164,6 +164,7 @@ for e in tqdm(range(NUM_EPOCHS)):
         avgTrainLoss, avgValLoss, lr))
     # Save the best model so far
     if avgValLoss < best_val_loss and config.SAVE_NET:
+        best_val_loss = avgValLoss
         # print(f'Best model so far is saved from epoch: {e}')
         utils.save_model(model, models_path=models_path, ep=e)
 
