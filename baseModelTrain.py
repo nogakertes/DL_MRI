@@ -13,7 +13,7 @@ import numpy as np
 import fastmri
 import config
 import utils
-from losses import add_ssim_reg
+from losses import SSIMLoss
 
 
 # Define experiment variables
@@ -70,9 +70,10 @@ optimizer = Adam(model.parameters(), lr=INIT_LR)
 # optimizer = SGD(model.parameters(), lr=INIT_LR)
 # optimizer = RMSprop(model.parameters(), lr=INIT_LR)
 lr = INIT_LR
-scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=LR_FACTOR, patience=LR_PATIENCE)
-# scheduler = ExponentialLR(optimizer, gamma=LR_FACTOR)
-
+#scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=LR_FACTOR, patience=LR_PATIENCE)
+scheduler = ExponentialLR(optimizer, gamma=LR_FACTOR)
+reg_loss = SSIMLoss()
+reg_factor = 0.01
 # calculate steps per epoch for training and test set
 trainSteps = len(train_data) // BATCH_SIZE
 
@@ -104,8 +105,7 @@ for e in tqdm(range(NUM_EPOCHS)):
 
         pred = model(x)
         # loss = lossFunc(pred, y.unsqueeze(1))     # for 1 input ch
-        loss = lossFunc(pred, y)
-        loss = add_ssim_reg(loss,pred,y)
+        loss = lossFunc(pred, y)+reg_factor*reg_loss(pred,y)
         # zero previously accumulated gradients, then perform backpropagation, and then update model parameters
         optimizer.zero_grad()
         loss.backward()
@@ -142,7 +142,7 @@ for e in tqdm(range(NUM_EPOCHS)):
             # make the predictions and calculate the validation loss
             pred = model(x)
             # val_loss = lossFunc(pred, y.unsqueeze(1))       # for 1 input ch
-            val_loss = lossFunc(pred, y)
+            val_loss = lossFunc(pred, y)+reg_factor*reg_loss(pred,y)
             totalValLoss += val_loss
 
     ''' Calculations and schduler step'''
