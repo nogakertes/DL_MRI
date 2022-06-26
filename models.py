@@ -57,8 +57,8 @@ class U_Net(nn.Module):
         n1 = config.INPUT_CHANNEL_SIZE
         filters = [n1, n1 * 2, n1 * 4, n1 * 8, n1 * 16]
 
-        # self.Input_norm = nn.BatchNorm2d(in_ch)
-        self.Input_norm = nn.LayerNorm(normalized_shape=(320, 320))
+        self.Input_norm = nn.BatchNorm2d(in_ch)
+        #self.Input_norm = nn.LayerNorm(normalized_shape=(320, 320))
 
         self.Maxpool1 = nn.MaxPool2d(kernel_size=2, stride=2)
         self.Maxpool2 = nn.MaxPool2d(kernel_size=2, stride=2)

@@ -35,9 +35,9 @@ def get_best_model_ep(models_path):
     # Find the best model
     best_epoch_model = 0
     for file in os.listdir(models_path):
-        model_epoch = os.path.split(file)[1].split('.')
-        if model_epoch > best_epoch_model:
-            best_epoch_model = model_epoch
+        model_epoch = os.path.split(file)[1].split('.')[0].split('_')[-1]
+        if int(model_epoch) >= best_epoch_model:
+            best_epoch_model = int(model_epoch)
 
     return best_epoch_model
 

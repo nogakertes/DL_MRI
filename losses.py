@@ -35,11 +35,11 @@ def create_window(window_size, channel=1):
 
     return window
 
-def ssim(img1, img2, DEVICE, window_size=11):
+def ssim(img1, img2, window_size=11):
     #L = val_range  # L is the dynamic range of the pixel values (255 for 8-bit grayscale images),
     b,c,h,w = img1.shape
     pad = window_size // 2
-    window = create_window(window_size=11,channel=c).to(DEVICE)
+    window = create_window(window_size=11,channel=c)
     # calculating the mu parameter (locally) for both images using a gaussian filter
     # calculates the luminosity params
     mu1 = F.conv2d(img1, window, padding=pad, groups=c)

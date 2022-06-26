@@ -21,8 +21,7 @@ def data_transform(kspace, mask, target, data_attributes, filename, slice_num):
     width, height = 320, 320
     kspace = transforms.to_tensor(kspace)
     kspace = transforms.complex_center_crop(kspace, shape=(width, height))
-    #kspace = (kspace-kspace.min())/(kspace.max()-kspace.min()) #minmax normalization per sample
-    # kspace, _, _ = transforms.normalize_instance(kspace)    # add normalization to kspace
+    kspace, _, _ = transforms.normalize_instance(kspace)    # add normalization to kspace
 
     # Apply mask on the k space
     if config.user == 'triton' or config.user == 'noga':
@@ -30,13 +29,13 @@ def data_transform(kspace, mask, target, data_attributes, filename, slice_num):
     else:
         masked_kspace, _ = transforms.apply_mask(kspace, mask_func)
 
-    # # normalize input
-    masked_kspace, mean, std = transforms.normalize_instance(masked_kspace, eps=1e-11)
-   # masked_kspace = masked_kspace.clamp(-6, 6)
-
+    # normalize input
+    # masked_kspace, mean, std = transforms.normalize_instance(masked_kspace, eps=1e-11)
+    # masked_kspace = masked_kspace.clamp(-6, 6)
+    #
     # # process kspace image
-    kspace = transforms.normalize(kspace, mean, std, eps=1e-11)
- #   kspace = kspace.clamp(-6, 6)
+    # kspace = transforms.normalize(kspace, mean, std, eps=1e-11)
+    # kspace = kspace.clamp(-6, 6)
 
     return kspace.reshape((2, width, height)), masked_kspace.reshape((2, width, height))
 

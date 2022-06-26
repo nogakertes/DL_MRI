@@ -5,8 +5,9 @@ import os
 import matplotlib.pyplot as plt
 from torch.nn import MSELoss
 from utils import init_paths, get_best_model_ep
-
+import random
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+from losses import ssim
 
 bt_size = config.TEST_BATCH_SIZE
 # Define experiment path according to user and environment
@@ -27,7 +28,6 @@ if not os.path.exists(base_models_path):
 base_results_path = os.path.join(exp_path, 'results')
 if not os.path.exists(base_results_path):
     os.makedirs(base_results_path)
-
 re_model_st = 'real_values_model'
 im_model_st = 'im_values_model'
 re_models_path = init_paths(base_results_path, base_models_path, re_model_st)
@@ -46,23 +46,34 @@ lossFunc = MSELoss()
 # set models to evaluation mode
 re_model.eval()
 im_model.eval()
+total_ssim_score = 0
 # turn off gradient tracking
 with torch.no_grad():
+    samples = random.sample(range(0,len(test_data)),5)
     for (i, (y, x)) in enumerate(test_data):
         (x, y) = (x.to(DEVICE), y.to(DEVICE))
         re_prediction = re_model(x[:, 0, :, :])
         im_prediction = im_model(x[:, 1, :, :])
         pred = torch.stack([re_prediction, im_prediction], 1)
+        pred = pred[:,:,0,:,:]
         print('MSE loss : {}'.format(lossFunc(pred, y)))
-        for i_slice in range(0, 30, 5):
+        total_ssim_score += ssim(y.cpu().detach(), pred.cpu().detach())
+        if i in samples:
             plt.figure()
-            showKspaceFromTensor(x[0, :, :, :])
-            plt.suptitle('input')
+            showKspaceFromTensor(x[0, :, :, :].cpu().detach())
+            plt.suptitle('input_test_sample_{}'.format(i))
             plt.figure()
-            showKspaceFromTensor(pred[0, :, :, :])
+            path = os.path.join(base_results_path, config.EXP_NAME + '_input_test_{}'.format(i))
+            plt.savefig(path)
+            showKspaceFromTensor(pred[0, :, :, :].cpu().detach())
             plt.suptitle('reconstruction result')
+            path = os.path.join(base_results_path, config.EXP_NAME + '_reconstruction result_test_{}'.format(i))
+            plt.savefig(path)
             plt.figure()
-            showKspaceFromTensor(y[0, :, :, :])
-            plt.suptitle('ground truth reconstruction')
+            showKspaceFromTensor(y[0, :, :, :].cpu().detach())
+            plt.suptitle('ground truth reconstruction_{}'.format(i))
+            path = os.path.join(base_results_path, config.EXP_NAME + '_ground truth reconstruction_test_{}'.format(i))
+            plt.savefig(path)
             plt.show()
 
+print('mean ssim score is : {}'.format(total_ssim_score / len(test_data)))
