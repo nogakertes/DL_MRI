@@ -29,7 +29,7 @@ if config.CLEARML:
     task.connect(config)
     logger = task.get_logger()
 
-DEVICE = "cuda:2" if torch.cuda.is_available() else "cpu"
+DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 print('############################################################')
 print(' ')
@@ -95,6 +95,9 @@ for e in tqdm(range(NUM_EPOCHS)):
         (x, y) = (x.to(DEVICE), y.to(DEVICE))
         # # Normalize x and y
         pred = model(x)
+        if config.DATA_CONSISTENCY:
+            consistency_x = x != 0
+            pred[consistency_x] = x[consistency_x]
         loss = lossFunc(pred, y)
         # zero previously accumulated gradients, then perform backpropagation, and then update model parameters
         optimizer.zero_grad()
@@ -102,22 +105,21 @@ for e in tqdm(range(NUM_EPOCHS)):
         optimizer.step()
         # add the loss to the total training loss so far
         totalTrainLoss += loss
-    # Plot the last epoch result
-    if e == NUM_EPOCHS-1:
+    # Plot epoch results during training
+    if e % 10 == 0 or e == NUM_EPOCHS-1:
         plt.figure()
         showKspaceFromTensor(x[5, :, :, :].cpu().detach())
-        plt.suptitle('input')
-        plt.figure()
-        path = os.path.join(results_path, config.EXP_NAME + "_input")
+        plt.suptitle(f'Epoch #{e} training downsampled input')
+        path = os.path.join(results_path, config.EXP_NAME + f'_epoch_#{e}_downsampled_k-space_input_image')
         plt.savefig(path)
         showKspaceFromTensor(pred[5, :, :, :].cpu().detach())
-        plt.suptitle('reconstruction result')
-        path = os.path.join(results_path, config.EXP_NAME + "_reconstruction result")
+        plt.suptitle(f'Epoch #{e} training reconstruction output')
+        path = os.path.join(results_path, config.EXP_NAME + f'_epoch_#{e}_reconstructed_k-space_image')
         plt.savefig(path)
         plt.figure()
         showKspaceFromTensor(y[5, :, :, :].cpu().detach())
-        plt.suptitle('ground truth reconstruction')
-        path = os.path.join(results_path, config.EXP_NAME + "_ground truth reconstruction")
+        plt.suptitle(f'Epoch #{e} training ground truth')
+        path = os.path.join(results_path, config.EXP_NAME + f'_epoch_#{e}_GT_k-space_image')
         plt.savefig(path)
 
     ''' Validation Loop '''
@@ -131,10 +133,13 @@ for e in tqdm(range(NUM_EPOCHS)):
             (x, y) = (x.to(DEVICE), y.to(DEVICE))
             # make the predictions and calculate the validation loss
             pred = model(x)
+            if config.DATA_CONSISTENCY:
+                consistency_x = x != 0
+                pred[consistency_x] = x[consistency_x]
             val_loss = lossFunc(pred, y)
             totalValLoss += val_loss
 
-    ''' Calculations and schduler step'''
+    ''' Calculations and scheduler step'''
     # calculate the average training and validation loss
     avgTrainLoss = totalTrainLoss / trainSteps
     avgValLoss = totalValLoss / valSteps

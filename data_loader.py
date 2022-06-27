@@ -10,8 +10,10 @@ import config
 # Create a mask function
 mask_func = subsample.RandomMaskFunc(
     center_fractions=[0.04],
-    accelerations=[8]
+    accelerations=[4]
 )
+
+
 def data_transform(kspace, mask, target, data_attributes, filename, slice_num):
     """
     Transform the given k-space data by multiplying with a mask into the subsampled k-space tensor

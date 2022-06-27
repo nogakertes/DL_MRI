@@ -130,6 +130,9 @@ for e in tqdm(range(NUM_EPOCHS)):
         # x = (x-x.min())/(x.max()-x.min())
         # y = (y-y.min())/(y.max()-y.min())
         pred = model(x)
+        if config.DATA_CONSISTENCY:
+            consistency_x = x != 0
+            pred[consistency_x] = x[consistency_x]
         loss = lossFunc(pred, y.unsqueeze(1))     # for 1 input ch
         # zero previously accumulated gradients, then perform backpropagation, and then update model parameters
         optimizer.zero_grad()
@@ -153,6 +156,9 @@ for e in tqdm(range(NUM_EPOCHS)):
             y = y[:, i_model, :, :]
             # make the predictions and calculate the validation loss
             pred = model(x)
+            if config.DATA_CONSISTENCY:
+                consistency_x = x != 0
+                pred[consistency_x] = x[consistency_x]
             val_loss = lossFunc(pred, y.unsqueeze(1))       # for 1 input ch
             totalValLoss += val_loss
         print(f'Finished ep: {e} validation with validation loss: {totalValLoss}')

@@ -154,6 +154,9 @@ for i_model in range(2):
                 y = y[:, i_model, :, :]
                 # make the predictions and calculate the validation loss
                 pred = model(x)
+                if config.DATA_CONSISTENCY:
+                    consistency_x = x != 0
+                    pred[consistency_x] = x[consistency_x]
                 val_loss = lossFunc(pred, y.unsqueeze(1))       # for 1 input ch
                 totalValLoss += val_loss
             print(f'Finished ep: {e} validation with validation loss: {totalValLoss}')
