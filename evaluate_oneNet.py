@@ -69,12 +69,12 @@ with torch.no_grad():
         y_image_space, y_image_space_shift = kspace_to_image(y.cpu().detach())
 
         # curr_psnr = calculate_psnr(y_image_space, pred_image_space)
-        curr_psnr_shift = calculate_psnr(y_image_space_shift, pred_image_space_shift)
+        curr_psnr_shift = calculate_psnr(y_image_space_shift, pred_image_space_shift,y_image_space_shift.max())
         # total_psnr_score += curr_psnr
         total_psnr_shift_score += curr_psnr_shift
 
         # curr_ssim_imgae = calculate_ssim(y_image_space, pred_image_space)
-        curr_ssim_imgae_shift = calculate_ssim(y_image_space_shift, pred_image_space_shift)
+        curr_ssim_imgae_shift = calculate_ssim(y_image_space_shift, pred_image_space_shift,y_image_space_shift.max())
         # total_ssim_score_image += curr_ssim_imgae
         total_ssim_score_image_shift += curr_ssim_imgae_shift
 

@@ -164,9 +164,9 @@ import math
 import numpy as np
 import cv2
 
-def py_ssim(img1, img2):
-    C1 = (0.01 * 255)**2
-    C2 = (0.03 * 255)**2
+def py_ssim(img1, img2,data_range):
+    C1 = (0.01 * data_range)**2
+    C2 = (0.03 * data_range)**2
 
     img1 = img1.astype(np.float64)
     img2 = img2.astype(np.float64)
@@ -187,23 +187,21 @@ def py_ssim(img1, img2):
     return ssim_map.mean()
 
 
-def calculate_ssim(img1, img2):
+def calculate_ssim(img1, img2,data_range):
     '''calculate SSIM
-    the same outputs as MATLAB's
-    img1, img2: [0, 255]
     '''
     if not img1.shape == img2.shape:
         raise ValueError('Input images must have the same dimensions.')
     if img1.ndim == 2:
-        return py_ssim(img1, img2)
+        return py_ssim(img1, img2,data_range)
     elif img1.ndim == 3:
         if img1.shape[2] == 3:
             ssims = []
             for i in range(3):
-                ssims.append(py_ssim(img1, img2))
+                ssims.append(py_ssim(img1, img2,data_range))
             return np.array(ssims).mean()
         elif img1.shape[2] == 1:
-            return py_ssim(np.squeeze(img1), np.squeeze(img2))
+            return py_ssim(np.squeeze(img1), np.squeeze(img2),data_range)
     else:
         raise ValueError('Wrong input image dimensions.')
 
@@ -211,11 +209,11 @@ def calculate_ssim(img1, img2):
 import math
 import numpy as np
 
-def calculate_psnr(img1, img2):
+def calculate_psnr(img1, img2,max_val):
     # img1 and img2 have range [0, 255]
     img1 = img1.astype(np.float64)
     img2 = img2.astype(np.float64)
     mse = np.mean((img1 - img2)**2)
     if mse == 0:
         return float('inf')
-    return 20 * math.log10(255.0 / math.sqrt(mse))
+    return 20 * math.log10(max_val / math.sqrt(mse))
