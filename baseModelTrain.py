@@ -16,19 +16,21 @@ import utils
 from losses import SSIMLoss
 
 
-# Define experiment variables
+# Define experiment parameters
 NUM_EPOCHS = config.EPOCHS
 BATCH_SIZE = config.BATCH_SIZE
 INIT_LR = config.LR
 LR_PATIENCE = config.LR_PATIENCE
 LR_FACTOR = config.LR_FACTOR
 
+# Open a clearml task if defined
 if config.CLEARML:
     from clearml import Task
     task = Task.init(project_name="DeepMRI", task_name=config.EXP_NAME)
     task.connect(config)
     logger = task.get_logger()
 
+# Choose the best device possible
 DEVICE = "cuda:1" if torch.cuda.is_available() else "cpu"
 
 print('############################################################')
@@ -36,7 +38,7 @@ print(' ')
 print('------------------BASE MODEL TRAINING------------------------')
 print('pytorch is using the {}'.format(DEVICE))
 
-# Define experiment path according to user and environment
+# Define experiment paths according to user and environment
 if config.user == 'noga':
     data_base_path = config.NOGA_DATA_PATH
     exp_path = os.path.join(config.NOGA_EXP_PATH, config.EXP_NAME)
@@ -47,6 +49,7 @@ elif config.user == 'triton':
     data_base_path = config.TRITON_DATA_PATH
     exp_path = os.path.join(config.TRITON_EXP_PATH, config.EXP_NAME)
 
+# Define specific paths for experiment uotputs
 results_path = os.path.join(exp_path, 'results')
 if not os.path.exists(results_path):
     os.makedirs(results_path)
@@ -56,12 +59,13 @@ if config.SAVE_NET:
     if not os.path.exists(models_path):
         os.makedirs(models_path)
 
+# Get the train and val dataloaders
 train_data = loadFromDir(data_base_path + 'train_data/', BATCH_SIZE, 'train')
 val_data = loadFromDir(data_base_path + 'val_data/', BATCH_SIZE, 'val')
-
 print('Number of training batches is {}'.format(len(train_data)))
 print('Number of validation batches is {}'.format(len(val_data)))
 
+# Initialize the model and attach to device
 model = U_Net().to(DEVICE)
 # initialize loss function and optimizer
 lossFunc = MSELoss()
@@ -78,9 +82,12 @@ reg_factor = 0.01
 trainSteps = len(train_data)
 valSteps = len(val_data)
 
+# Define a super high val loss to find the best validation losses during training
 best_val_loss = 10000
 # initialize a dictionary to store training loss history
 H = {"train_loss": [], "val_loss": [], "lr": []}
+
+# Start model training
 for e in tqdm(range(NUM_EPOCHS)):
     # set the model in training mode
     model.train()
@@ -90,14 +97,16 @@ for e in tqdm(range(NUM_EPOCHS)):
 
     ''' Training Loop '''
     for (i, (y, x)) in enumerate(train_data):
-        # # perform a forward pass and calculate the training loss
+        # perform a forward pass and calculate the training loss
         # send the input to the device
         (x, y) = (x.to(DEVICE), y.to(DEVICE))
-        # # Normalize x and y
+        # Forward pass in the model
         pred = model(x)
+        # Adding data consistency if defined
         if config.DATA_CONSISTENCY:
             consistency_x = x != 0
             pred[consistency_x] = x[consistency_x]
+        # Calculation of the loss
         loss = lossFunc(pred, y)
         # zero previously accumulated gradients, then perform backpropagation, and then update model parameters
         optimizer.zero_grad()
@@ -105,7 +114,7 @@ for e in tqdm(range(NUM_EPOCHS)):
         optimizer.step()
         # add the loss to the total training loss so far
         totalTrainLoss += loss
-    # Plot epoch results during training
+    # Plot several epoch results during training
     if e % 10 == 0 or e == NUM_EPOCHS-1:
         plt.figure()
         showKspaceFromTensor(x[5, :, :, :].cpu().detach())
@@ -133,9 +142,11 @@ for e in tqdm(range(NUM_EPOCHS)):
             (x, y) = (x.to(DEVICE), y.to(DEVICE))
             # make the predictions and calculate the validation loss
             pred = model(x)
+            # Add the data consistency if defined
             if config.DATA_CONSISTENCY:
                 consistency_x = x != 0
                 pred[consistency_x] = x[consistency_x]
+            # Calculate validation loss
             val_loss = lossFunc(pred, y)
             totalValLoss += val_loss
 
@@ -169,10 +180,13 @@ for e in tqdm(range(NUM_EPOCHS)):
         scheduler.step()
         lr = scheduler.get_last_lr()[0]
         print(f'Defined new lr = {lr}')
+    # # Optional use of Reduce on plateau scheduler
     # Decrease the lr by factor (new_lr = lr * factor) if val_loss didn't improve over #patientce epochs
     # scheduler.step(avgValLoss)
     # lr = scheduler.get_last_lr()[0]
     # print(f'Defined new lr = {lr}')
+
+    # Stop the training process if the lr is too small
     if lr < 1e-7:
         print(f'lr is {lr} and is smaller than 1e-7. Stopping the train!')
 
@@ -205,7 +219,3 @@ plt.show()
 if config.SAVE_PLOTS:
     path = os.path.join(results_path, config.EXP_NAME + "_learning_rate_plot")
     plt.savefig(path)
-
-# # save the last model to disk
-# if config.SAVE_NET:
-#     utils.save_model(model, models_path=models_path)

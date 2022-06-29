@@ -31,11 +31,11 @@ def data_transform(kspace, mask, target, data_attributes, filename, slice_num):
     else:
         masked_kspace, _ = transforms.apply_mask(kspace, mask_func)
 
-    # normalize input
+    # # Optional input normalization
     # masked_kspace, mean, std = transforms.normalize_instance(masked_kspace, eps=1e-11)
     # masked_kspace = masked_kspace.clamp(-6, 6)
     #
-    # # process kspace image
+    # # Optional kspace normalization
     # kspace = transforms.normalize(kspace, mean, std, eps=1e-11)
     # kspace = kspace.clamp(-6, 6)
 
@@ -67,5 +67,3 @@ def showKspaceFromTensor(tensor):
     image = np.fft.fft2(numpy_kspace)
     plt.subplot(1,2,2)
     plt.imshow(np.abs(np.fft.fftshift(image)), cmap='gray')
-
-

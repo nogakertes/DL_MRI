@@ -13,10 +13,16 @@ import fastmri
 import config
 
 
+'''
+This file contains different utilities and fuctions that we wrote and used more than once
+'''
+
+
 def save_model(model, models_path, ep=config.EPOCHS):
     path = os.path.join(models_path, f'model_ep_{ep}.pth')
     print(f'Saved model from epoch {ep} at {path}')
     torch.save(model, path)
+
 
 def init_paths(base_results_path, base_models_path, curr_model):
     # Set paths infrastructure
@@ -41,12 +47,14 @@ def get_best_model_ep(models_path):
 
     return best_epoch_model
 
+
 def kspace_to_image(tensor):
     # print(tensor.squeeze(0).shape)            # Debug
     _, n, m = tensor.squeeze(0).shape
     numpy_kspace = fastmri.tensor_to_complex_np(tensor.reshape((n, m, 2)))
     image = np.fft.fft2(numpy_kspace)
     return image, np.abs(np.fft.fftshift(image))
+
 
 def inverse_mask(mask):
     zero_indices = mask == 0

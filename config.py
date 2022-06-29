@@ -1,10 +1,7 @@
 """configuration file for project"""
 
 EXP_NAME = 'baseline_vanilla_Unet_data_consistency_MSE_Adam_8_in_ch_28Jun2022'
-# EXP_NAME = 'Vanilla_Unet_26Jun2022_testSSIMreg_take1'
-# CLEARML = False
 # user = 'amitay'
-# BATCH_SIZE = 8
 # user = 'noga'
 user = 'triton'
 CLEARML = False

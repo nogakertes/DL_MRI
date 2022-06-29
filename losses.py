@@ -3,6 +3,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 
+'''
+This file holds different losses used in our experiment
+'''
+
+
 def add_l2_reg(loss,net):
     """add l2 regularization to loss"""
     l2_lambda = 0.001
@@ -11,7 +16,6 @@ def add_l2_reg(loss,net):
     reg_loss = loss + l2_lambda * l2_norm
     return reg_loss
 
-## all functions needed for calculation of SSIM score
 
 def gaussian(window_size, sigma):
     """
@@ -34,6 +38,7 @@ def create_window(window_size, channel=1):
     window = torch.Tensor(_2d_window.expand(channel, 1, window_size, window_size).contiguous())
 
     return window
+
 
 def ssim(img1, img2, window_size=11):
     #L = val_range  # L is the dynamic range of the pixel values (255 for 8-bit grayscale images),
@@ -64,46 +69,6 @@ def ssim(img1, img2, window_size=11):
     ssim_score = (numerator1 * numerator2) / (denominator1 * denominator2)
 
     return ssim_score.mean()
-
-#
-# class SSIMLoss(nn.Module):
-#     """
-#     SSIM loss module.
-#     """
-#
-#     def __init__(self, win_size: int = 7, k1: float = 0.01, k2: float = 0.03):
-#         """
-#         Args:
-#             win_size: Window size for SSIM calculation.
-#             k1: k1 parameter for SSIM calculation.
-#             k2: k2 parameter for SSIM calculation.
-#         """
-#         super().__init__()
-#         self.win_size = win_size
-#         self.k1, self.k2 = k1, k2
-#         self.register_buffer("w", torch.ones(1, 1, win_size, win_size) / win_size ** 2)
-#         NP = win_size ** 2
-#         self.cov_norm = NP / (NP - 1)
-#
-#     def forward(
-#         self,
-#         X: torch.Tensor,
-#         Y: torch.Tensor,
-#         DEVICE : str,
-#         reduced: bool = True,
-#     ):
-#         S = ssim(X,Y,DEVICE)
-#         if reduced:
-#             return 1 - S.mean()
-#         else:
-#             return 1 - S
-
-# def add_ssim_reg(loss,pred,y,DEVICE):
-#     """add ssim regularization to loss"""
-#     ssim_lambda = 0.001
-#     reg_loss = loss + (1-ssim(pred,y).to(DEVICE)) * ssim_lambda
-#     return reg_loss
-
 
 
 class SSIMLoss(nn.Module):
@@ -164,6 +129,7 @@ import math
 import numpy as np
 import cv2
 
+
 def py_ssim(img1, img2,data_range):
     C1 = (0.01 * data_range)**2
     C2 = (0.03 * data_range)**2
@@ -208,6 +174,7 @@ def calculate_ssim(img1, img2,data_range):
 
 import math
 import numpy as np
+
 
 def calculate_psnr(img1, img2,max_val):
     # img1 and img2 have range [0, 255]

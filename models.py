@@ -5,6 +5,7 @@ import torch.utils.data
 import torch
 import config
 
+
 class conv_block(nn.Module):
     """
     Convolution Block
@@ -126,6 +127,7 @@ class U_Net(nn.Module):
         # d1 = self.active(out)
 
         return out
+
 
 class Single_ch_U_Net(nn.Module):
     """
