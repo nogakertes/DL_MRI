@@ -89,22 +89,25 @@ with torch.no_grad():
             showKspaceFromTensor(x[0, :, :, :].cpu().detach())
             plt.suptitle(f'Test input {i}, kspace SSIM: {curr_ssim:.4f}, image SSIM: {curr_ssim_imgae_shift:.4f}, MSE: {curr_MSE:.4f}')
             path = os.path.join(results_path, config.EXP_NAME + f'_test_input_{i}')
-            plt.show()
+            # plt.show()
             plt.savefig(path)
+            plt.close()
 
             plt.figure()
             showKspaceFromTensor(pred[0, :, :, :].cpu().detach())
             plt.suptitle(f'Test prediction {i}, kspace SSIM: {curr_ssim:.4f}, image SSIM: {curr_ssim_imgae_shift:.4f}, MSE: {curr_MSE:.4f}')
             path = os.path.join(results_path, config.EXP_NAME + f'_test_reconstruction_output_{i}')
-            plt.show()
+            # plt.show()
             plt.savefig(path)
+            plt.close()
 
             plt.figure()
             showKspaceFromTensor(y[0, :, :, :].cpu().detach())
             plt.suptitle(f'GT sample {i}, kspace SSIM: {curr_ssim:.4f}, image SSIM: {curr_ssim_imgae_shift:.4f}, MSE: {curr_MSE:.4f}')
             path = os.path.join(results_path, config.EXP_NAME + f'_test_GT_{i}')
-            plt.show()
+            # plt.show()
             plt.savefig(path)
+            plt.close()
 
 with open(accuracy_file_path, "w") as f:
     f.write(f'Experiment {config.EXP_NAME} results:')

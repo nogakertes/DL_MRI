@@ -3,7 +3,7 @@ import datetime
 from torch.optim.lr_scheduler import ReduceLROnPlateau, ExponentialLR
 from models import *
 from data_loader import loadFromDir, showKspaceFromTensor
-from torch.nn import MSELoss
+from torch.nn import MSELoss,L1Loss
 from torch.optim import Adam, SGD, RMSprop
 import torch.nn.functional as F
 from tqdm import tqdm
@@ -29,7 +29,7 @@ if config.CLEARML:
     task.connect(config)
     logger = task.get_logger()
 
-DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
+DEVICE = "cuda:1" if torch.cuda.is_available() else "cpu"
 
 print('############################################################')
 print(' ')
@@ -65,7 +65,7 @@ print('Number of validation batches is {}'.format(len(val_data)))
 model = U_Net().to(DEVICE)
 # initialize loss function and optimizer
 lossFunc = MSELoss()
-# lossFunc = F.l1_loss()
+# lossFunc = L1Loss()
 optimizer = Adam(model.parameters(), lr=INIT_LR)
 # optimizer = SGD(model.parameters(), lr=INIT_LR)
 # optimizer = RMSprop(model.parameters(), lr=INIT_LR)
