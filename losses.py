@@ -41,6 +41,9 @@ def create_window(window_size, channel=1):
 
 
 def ssim(img1, img2, window_size=11):
+    '''
+    SSIM implementation
+    '''
     #L = val_range  # L is the dynamic range of the pixel values (255 for 8-bit grayscale images),
     b,c,h,w = img1.shape
     pad = window_size // 2
@@ -131,6 +134,10 @@ import cv2
 
 
 def py_ssim(img1, img2,data_range):
+    '''
+    Python implementation of ssim
+    '''
+
     C1 = (0.01 * data_range)**2
     C2 = (0.03 * data_range)**2
 
@@ -154,7 +161,8 @@ def py_ssim(img1, img2,data_range):
 
 
 def calculate_ssim(img1, img2,data_range):
-    '''calculate SSIM
+    '''
+    calculates SSIM vetween img1 and img2
     '''
     if not img1.shape == img2.shape:
         raise ValueError('Input images must have the same dimensions.')
@@ -177,6 +185,9 @@ import numpy as np
 
 
 def calculate_psnr(img1, img2,max_val):
+    '''
+    Calculates PSNR between img1 and img2
+    '''
     # img1 and img2 have range [0, 255]
     img1 = img1.astype(np.float64)
     img2 = img2.astype(np.float64)

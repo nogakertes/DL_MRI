@@ -60,6 +60,9 @@ def loadFromDir(dir_path, batch_size, data_type, remove_Edge_slices = None):
 
 
 def showKspaceFromTensor(tensor):
+    ''''
+    This function gets a complex tensor (with real and imaginary parts) and displays the kspace
+    '''
     _,n,m = tensor.shape
     numpy_kspace = fastmri.tensor_to_complex_np(tensor.reshape((n,m,2)))
     plt.subplot(1,2,1)
